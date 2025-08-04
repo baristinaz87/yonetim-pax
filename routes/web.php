@@ -8,6 +8,10 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Route::view('merchants', 'merchants')
+    ->middleware(['auth', 'verified'])
+    ->name('merchants');
+
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
