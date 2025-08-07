@@ -14,7 +14,7 @@
         @foreach($data as $charge)
             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <td class="px-6 py-4">
-                    {{ !empty($charge["created_at"]) ? Carbon::parse($charge["created_at"])->format('d/m/Y H:i') : "" }}
+                    {{ !empty($charge["created_at"]) ? Carbon::parse($charge["created_at"])->format('d/m/Y') : "" }}
                 </td>
                 <td class="px-6 py-4">
                     {{ !empty($charge["amount"]) ? "$".number_format((float)$charge["amount"], 2, ',', '') : "" }}

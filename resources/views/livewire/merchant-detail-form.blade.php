@@ -308,8 +308,11 @@
                 </div>
             </div>
             @if (session()->has('message'))
-                <div class="mt-2 mb-4 px-4 py-2 bg-green-100 text-green-800 rounded">
+                <div class="mt-2 mb-4 px-4 py-2 bg-green-100 text-green-800 rounded relative">
                     {{ session('message') }}
+                    <button wire:click="clearMessageSession()" type="button" class="absolute right-4 top-2 text-green-800/70 hover:text-green-900" aria-label="Kapat" title="Kapat">
+                        X
+                    </button>
                 </div>
             @endif
         </form>
