@@ -1,3 +1,4 @@
+@php use Carbon\Carbon; @endphp
 <div>
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -63,8 +64,8 @@
                             @foreach($status as $key => $value)
                                 <li>
                                     <div class="flex items-center p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600">
-                                        <input wire:click="$set('selectedStatus', '{{$value}}')" id="choice-{{$value}}" type="radio" value="{{$value}}" name="filter-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                        <label for="choice-{{$value}}" class="w-full ms-2 text-sm font-medium text-gray-900 rounded-sm dark:text-gray-300">{{$key}}</label>
+                                        <input wire:click="$set('selectedStatus', '{{$key}}')" id="choice-{{$key}}" type="radio" value="{{$key}}" name="filter-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                        <label for="choice-{{$key}}" class="w-full ms-2 text-sm font-medium text-gray-900 rounded-sm dark:text-gray-300">{{$value}}</label>
                                     </div>
                                 </li>
                             @endforeach
@@ -85,13 +86,13 @@
                     {{ $customer["setting"]["shop_domain"] ?? "" }}
                 </td>
                 <td class="px-6 py-4">
-                    {{ $customer["setting"]["credit_expired_at"] ?? "" }}
+                    {{ !empty($customer["setting"]["credit_expired_at"]) ? Carbon::parse($customer["setting"]["credit_expired_at"])->format('d/m/Y') : "" }}
                 </td>
                 <td class="px-6 py-4">
                     {{ $customer["setting"]["credit"] ?? "" }}
                 </td>
                 <td class="px-6 py-4">
-                    {{ $customer["setting"]["status"] ?? "" }}
+                    {{ empty($customer["setting"]["status"]) ? "" : $status[$customer["setting"]["status"]] }}
                 </td>
                 <td class="px-6 py-4">
                     <a href="{{ route('merchant-detail', ['id' => $customer["id"]]) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Düzenle</a>

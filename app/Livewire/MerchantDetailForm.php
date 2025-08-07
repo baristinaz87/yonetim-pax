@@ -39,6 +39,11 @@ class MerchantDetailForm extends Component
         $this->merchantId = $id;
     }
 
+    public function clearMessageSession(): void
+    {
+        session()->remove("message");
+    }
+
     public function updateSetting(): void
     {
         $validated = $this->validate([
