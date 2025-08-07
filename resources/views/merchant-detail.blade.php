@@ -8,6 +8,7 @@
         <div class="max-w-[1600px] mx-auto sm:px-6 lg:px-8">
             <div class="p-6 text-gray-900">
                 <livewire:merchant-detail-form :id="request('id')" />
+                <livewire:merchant-charges-table :id="request('id')" />
             </div>
         </div>
     </div>
