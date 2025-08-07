@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+Route::redirect('/', '/login');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
@@ -11,6 +11,10 @@ Route::view('dashboard', 'dashboard')
 Route::view('merchants', 'merchants')
     ->middleware(['auth', 'verified'])
     ->name('merchants');
+
+Route::view('merchant-detail/{id}', 'merchant-detail')
+    ->middleware(['auth', 'verified'])
+    ->name('merchant-detail');
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])

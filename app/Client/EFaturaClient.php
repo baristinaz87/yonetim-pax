@@ -22,6 +22,30 @@ class EFaturaClient
         ]);
     }
 
+    public function getMerchant(int $id): array
+    {
+        try {
+            $response = $this->client->get('/api/merchant/id/'. $id);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
+    public function updateMerchant(int $id, $values): array
+    {
+        try {
+            $response = $this->client->put('/api/merchant/id/'. $id, ["json" => $values]);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
     public function getMerchants(int $page, int $perPage, ?string $sortField, string $sortDirection, array $search = []): array
     {
         try {
