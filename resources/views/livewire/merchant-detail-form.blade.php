@@ -280,7 +280,7 @@
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
                         Durum
                     </label>
-                    <?php
+                    @php
                         $statuses = [
                             "new"               => "Yeni Müşteriler",
                             "active"            => "Aktif Müşteriler",
@@ -290,7 +290,7 @@
                             "wait_activation"   => "Akt. Bekleyenler",
                             "wait_deactivation" => "Deakt. Bekleyenler"
                         ];
-                    ?>
+                    @endphp
                     <select id="status" wire:model.defer="status" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
                         @foreach($statuses as $key => $value)
                             <option value="{{$key}}" {{ $data["setting"]["status"] === $key ? "selected" : "" }}>{{$value}}</option>
