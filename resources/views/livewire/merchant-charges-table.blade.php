@@ -1,8 +1,8 @@
 @php use Carbon\Carbon; @endphp
 <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
     <div class="mx-2 my-2 text-xl font-bold">Ödemeler</div>
-    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+    <table class="w-full text-sm text-left rtl:text-right text-gray-500">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
         <tr>
             <th scope="col" class="px-6 py-3">Tarih</th>
             <th scope="col" class="px-6 py-3">Tutar (USD)</th>
@@ -12,7 +12,7 @@
         </thead>
         <tbody>
         @foreach($data as $charge)
-            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+            <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
                 <td class="px-6 py-4">
                     {{ !empty($charge["created_at"]) ? Carbon::parse($charge["created_at"])->format('d/m/Y') : "" }}
                 </td>
@@ -31,9 +31,9 @@
     </table>
     {{-- PAGINATION --}}
     <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4" aria-label="Table navigation">
-        <span class="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
-            <span class="font-semibold text-gray-900 dark:text-white">{{ $total_records }}</span> kayıttan <span
-                    class="font-semibold text-gray-900 dark:text-white">{{ (($current_page - 1) * $per_page) + 1 }} - {{ $current_page * $per_page }}</span> arası gösteriliyor.
+        <span class="text-sm font-normal text-gray-500 mb-4 md:mb-0 block w-full md:inline md:w-auto">
+            <span class="font-semibold text-gray-900">{{ $total_records }}</span> kayıttan <span
+                    class="font-semibold text-gray-900">{{ (($current_page - 1) * $per_page) + 1 }} - {{ $current_page * $per_page }}</span> arası gösteriliyor.
         </span>
         @php
             $paginatorButtonCount = 2;
