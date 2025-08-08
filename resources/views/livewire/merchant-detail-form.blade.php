@@ -140,7 +140,7 @@
                     <label for="default_tax" class="block text-sm font-medium text-gray-700 mb-1">
                         Varsayılan Vergi Oranı
                     </label>
-                    <?php $taxValues = [1, 10, 20]; ?>
+                    @php $taxValues = [1, 10, 20]; @endphp
                     <select id="default_tax" wire:model.defer="default_tax" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
                         @foreach($taxValues as $taxValue)
                             <option value="{{$taxValue}}" {{ $data["setting"]["default_tax"] === $taxValue ? "selected" : "" }}>%{{$taxValue}}</option>
