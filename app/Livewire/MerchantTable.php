@@ -10,16 +10,6 @@ class MerchantTable extends Component
 {
     private EFaturaClient $eFaturaClient;
 
-    public array $status = [
-        "new"               => "Yeni Müşteriler",
-        "active"            => "Aktif Müşteriler",
-        "passive"           => "Pasif Müşteriler",
-        "on_track"            => "Takipteki Müşteriler",
-        "wait_return"        => "Dönüş Beklenenler",
-        "wait_activation"    => "Akt. Bekleyenler",
-        "wait_deactivation"  => "Deakt. Bekleyenler",
-    ];
-
     public int $page = 1;
     public int $perPage = 10;
     public int $total = 10;

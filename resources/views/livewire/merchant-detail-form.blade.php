@@ -1,16 +1,41 @@
+@php
+    $statuses = [
+        "new"               => "Yeni Müşteriler",
+        "active"            => "Aktif Müşteriler",
+        "passive"           => "Pasif Müşteriler",
+        "on_track"          => "Takipteki Müşteriler",
+        "wait_return"       => "Dönüş Beklenenler",
+        "wait_activation"   => "Akt. Bekleyenler",
+        "wait_deactivation" => "Deakt. Bekleyenler"
+    ];
+
+    $colors = [
+        "new"               => "bg-[#2563EB]",
+        "active"            => "bg-[#10B981]",
+        "passive"           => "bg-[#9CA3AF]",
+        "on_track"          => "bg-[#F59E0B]",
+        "wait_return"       => "bg-[#F97316]",
+        "wait_activation"   => "bg-[#3B82F6]",
+        "wait_deactivation" => "bg-[#EF4444]",
+    ];
+@endphp
+
 <div>
     <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
         <!-- Üst Başlık ve Butonlar -->
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold">{{ $data["setting"]["unvan"] }}</h1>
+            <h1 class="text-2xl font-bold">{{ $unvan }}</h1>
             <div class="flex items-center gap-2">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-1">
+                <a href="https://partners.shopify.com/1779760/stores/{{ $shop_id }}" target="_blank" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-1">
                     Shopify Partners
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
-                </button>
+                </a>
                 <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">+ Kontör Yükle</button>
+                <span class="{{ $colors[$status ?? ""] ?? "bg-gray-300" }} text-white px-4 py-2 rounded">
+                     {{ $statuses[$status ?? ""] ?? "Durum Boş" }}
+                </span>
             </div>
         </div>
         <!-- Bilgi Kartı -->
@@ -20,16 +45,18 @@
                 <div>
                     <div class="mb-4">
                         <p class="font-medium text-gray-600">Mağaza Adı</p>
-                        <p>{{ $data["setting"]["shop_name"] }}</p>
+                        <p>{{ $shop_name ?? "" }}</p>
                     </div>
                     <div class="mb-4">
                         <p class="font-medium text-gray-600">Mağaza Domain</p>
-                        <a href="https://{{ $data["setting"]["shop_domain"] }}" target="_blank" class="text-blue-600 underline">{{ $data["setting"]["shop_domain"] }}</a>
+                        @if($shop_domain ?? false)
+                            <a href="https://{{ $shop_domain }}" target="_blank" class="text-blue-600 underline">{{ $shop_domain }}</a>
+                        @endif
                     </div>
                     <div>
                         <p class="font-medium text-gray-600">Mağaza Açılış Tarihi</p>
                         <span class="inline-block bg-green-100 text-green-700 text-sm px-3 py-1 rounded mt-1">
-                            {{ $data["setting"]["shop_created_at"] }}
+                            {{ $shop_created_at ?? "" }}
                         </span>
                     </div>
                 </div>
@@ -37,17 +64,17 @@
                 <div>
                     <div class="mb-4">
                         <p class="font-medium text-gray-600">Mağaza Email</p>
-                        <p>{{ $data["setting"]["shop_email"] }}</p>
+                        <p>{{ $shop_email ?? "" }}</p>
                     </div>
                     <div class="mb-4">
                         <p class="font-medium text-gray-600">Myshopify Domain</p>
-                        <a href="https://{{ $data["setting"]["shop_myshopify_domain"] }}" target="_blank" class="text-blue-600 underline">
-                            {{ $data["setting"]["shop_myshopify_domain"] }}
-                        </a>
+                        @if($shop_myshopify_domain ?? false)
+                            <a href="https://{{ $shop_myshopify_domain }}" target="_blank" class="text-blue-600 underline">{{ $shop_myshopify_domain }}</a>
+                        @endif
                     </div>
                     <div>
                         <p class="font-medium text-gray-600">Shopify Paketi</p>
-                        <p>{{ $data["setting"]["shop_plan"] }}</p>
+                        <p>{{ $shop_plan ?? "" }}</p>
                     </div>
                 </div>
             </div>
@@ -64,9 +91,8 @@
                     <input
                         type="text"
                         id="unvan"
-                        wire:model.defer="unvan"
+                        wire:model.defer="data.unvan"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                        value="{{ $data["setting"]["unvan"] }}"
                     />
                 </div>
 
@@ -78,7 +104,7 @@
                     <input
                         type="email"
                         id="email"
-                        wire:model.defer="email"
+                        wire:model.defer="data.email"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -86,12 +112,12 @@
                 <!-- Telefon 1 -->
                 <div>
                     <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
-                        Telefon 1
+                        Telefon 1 <span class="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         id="phone"
-                        wire:model.defer="phone"
+                        wire:model.defer="data.phone"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -99,12 +125,12 @@
                 <!-- Telefon 2 -->
                 <div>
                     <label for="mobile" class="block text-sm font-medium text-gray-700 mb-1">
-                        Telefon 2 (Mobil)
+                        Telefon 2 (Mobil) <span class="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         id="mobile"
-                        wire:model.defer="mobile"
+                        wire:model.defer="data.mobile"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -112,12 +138,12 @@
                 <!-- Vergi Dairesi -->
                 <div>
                     <label for="tax_office" class="block text-sm font-medium text-gray-700 mb-1">
-                        Vergi Dairesi
+                        Vergi Dairesi <span class="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         id="tax_office"
-                        wire:model.defer="tax_office"
+                        wire:model.defer="data.tax_office"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -125,12 +151,12 @@
                 <!-- Vergi Numarası / TCKN -->
                 <div>
                     <label for="tax_number" class="block text-sm font-medium text-gray-700 mb-1">
-                        Vergi Numarası / TCKN
+                        Vergi Numarası / TCKN <span class="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         id="tax_number"
-                        wire:model.defer="tax_number"
+                        wire:model.defer="data.tax_number"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -138,58 +164,46 @@
                 <!-- Varsayılan Vergi Oranı -->
                 <div>
                     <label for="default_tax" class="block text-sm font-medium text-gray-700 mb-1">
-                        Varsayılan Vergi Oranı
+                        Varsayılan Vergi Oranı <span class="text-red-500">*</span>
                     </label>
-                    @php $taxValues = [1, 10, 20]; @endphp
-                    <select id="default_tax" wire:model.defer="default_tax" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
-                        @foreach($taxValues as $taxValue)
-                            <option value="{{$taxValue}}" {{ $data["setting"]["default_tax"] === $taxValue ? "selected" : "" }}>%{{$taxValue}}</option>
-                        @endforeach
+
+                    <select id="default_tax" wire:model.defer="data.default_tax" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="1">%1</option>
+                        <option value="10">%10</option>
+                        <option value="20">%20</option>
                     </select>
                 </div>
 
                 <!-- Vergi Seçimi -->
                 <div>
                     <label for="tax_override" class="block text-sm font-medium text-gray-700 mb-1">
-                        Vergi Seçimi
+                        Vergi Seçimi <span class="text-red-500">*</span>
                     </label>
-                    <select
-                        id="tax_override"
-                        wire:model.defer="tax_override"
-                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                    >
-                        <option value="0" {{ !$data["setting"]["tax_override"] ? "selected" : "" }}>Shopify</option>
-                        <option value="1" {{ $data["setting"]["tax_override"] ? "selected" : "" }}>Varsayılan KDV</option>
+                    <select id="tax_override" wire:model.defer="data.tax_override" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="0">Shopify</option>
+                        <option value="1">Varsayılan KDV</option>
                     </select>
                 </div>
 
                 <!-- Aktif (Confirm) -->
                 <div>
                     <label for="confirm" class="block text-sm font-medium text-gray-700 mb-1">
-                        Aktif (Confirm)
+                        Aktif (Confirm) <span class="text-red-500">*</span>
                     </label>
-                    <select
-                        id="confirm"
-                        wire:model.defer="confirm"
-                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                    >
-                        <option value="1" {{ $data["setting"]["confirm"] ? "selected" : "" }}>Evet</option>
-                        <option value="0" {{ !$data["setting"]["confirm"] ? "selected" : "" }}>Hayır</option>
+                    <select id="confirm" wire:model.defer="data.confirm" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="1">Evet</option>
+                        <option value="0">Hayır</option>
                     </select>
                 </div>
 
                 <!-- İlk Kontör -->
                 <div>
                     <label for="first_credit" class="block text-sm font-medium text-gray-700 mb-1">
-                        İlk Kontör
+                        İlk Kontör <span class="text-red-500">*</span>
                     </label>
-                    <select
-                        id="first_credit"
-                        wire:model.defer="first_credit"
-                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                    >
-                        <option value="1" {{ $data["setting"]["first_credit"] ? "selected" : "" }}>Evet</option>
-                        <option value="0" {{ !$data["setting"]["first_credit"] ? "selected" : "" }}>Hayır</option>
+                    <select id="first_credit" wire:model.defer="data.first_credit" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="1">Evet</option>
+                        <option value="0">Hayır</option>
                     </select>
                 </div>
 
@@ -201,7 +215,7 @@
                     <input
                         type="text"
                         id="api_user"
-                        wire:model.defer="api_user"
+                        wire:model.defer="data.api_user"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -214,7 +228,7 @@
                     <input
                         type="text"
                         id="api_pass"
-                        wire:model.defer="api_pass"
+                        wire:model.defer="data.api_pass"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -227,7 +241,7 @@
                     <input
                         type="text"
                         id="xslt_code_efatura"
-                        wire:model.defer="xslt_code_efatura"
+                        wire:model.defer="data.xslt_code_efatura"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -240,7 +254,7 @@
                     <input
                         type="text"
                         id="xslt_code"
-                        wire:model.defer="xslt_code"
+                        wire:model.defer="data.xslt_code"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </div>
@@ -248,30 +262,22 @@
                 <!-- Otomatik Fatura -->
                 <div>
                     <label for="auto_send" class="block text-sm font-medium text-gray-700 mb-1">
-                        Otomatik Fatura
+                        Otomatik Fatura <span class="text-red-500">*</span>
                     </label>
-                    <select
-                        id="auto_send"
-                        wire:model.defer="auto_send"
-                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                    >
-                        <option value="1" {{ $data["setting"]["auto_send"] ? "selected" : "" }}>Evet</option>
-                        <option value="0" {{ !$data["setting"]["auto_send"] ? "selected" : "" }}>Hayır</option>
+                    <select id="auto_send" wire:model.defer="data.auto_send" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="1">Evet</option>
+                        <option value="0">Hayır</option>
                     </select>
                 </div>
 
                 <!-- E-Mail Fatura Gönderimi -->
                 <div>
                     <label for="send_email" class="block text-sm font-medium text-gray-700 mb-1">
-                        E-Mail Fatura Gönderimi
+                        E-Mail Fatura Gönderimi <span class="text-red-500">*</span>
                     </label>
-                    <select
-                        id="send_email"
-                        wire:model.defer="send_email"
-                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                    >
-                        <option value="1" {{ $data["setting"]["send_email"] ? "selected" : "" }}>Evet</option>
-                        <option value="0" {{ !$data["setting"]["send_email"] ? "selected" : "" }}>Hayır</option>
+                    <select id="send_email" wire:model.defer="data.send_email" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="1">Evet</option>
+                        <option value="0">Hayır</option>
                     </select>
                 </div>
 
@@ -280,20 +286,10 @@
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
                         Durum
                     </label>
-                    @php
-                        $statuses = [
-                            "new"               => "Yeni Müşteriler",
-                            "active"            => "Aktif Müşteriler",
-                            "passive"           => "Pasif Müşteriler",
-                            "on_track"          => "Takipteki Müşteriler",
-                            "wait_return"       => "Dönüş Beklenenler",
-                            "wait_activation"   => "Akt. Bekleyenler",
-                            "wait_deactivation" => "Deakt. Bekleyenler"
-                        ];
-                    @endphp
-                    <select id="status" wire:model.defer="status" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                    <select id="status" wire:model.defer="data.status" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="">-- Seçiniz --</option>
                         @foreach($statuses as $key => $value)
-                            <option value="{{$key}}" {{ $data["setting"]["status"] === $key ? "selected" : "" }}>{{$value}}</option>
+                            <option value="{{$key}}">{{$value}}</option>
                         @endforeach
                     </select>
                 </div>
@@ -315,6 +311,10 @@
                     </button>
                 </div>
             @endif
+            @php($all = array_keys($errors->get('data.*')))
+            @foreach ($all as $key)
+                @error($key) <div class="my-2 px-4 py-2 bg-red-200 rounded text-red-600 text-sm">{{ $message }}</div> @enderror
+            @endforeach
         </form>
     </div>
 </div>

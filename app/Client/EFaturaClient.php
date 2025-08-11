@@ -70,7 +70,7 @@ class EFaturaClient
     public function getMerchantCharges(string $id, int $page, int $perPage): array
     {
         try {
-            $query = ["page" => $page, "per_page" => $perPage];
+            $query = ["page" => $page, "per_page" => $perPage, "sort" => "-created_at"];
             $response = $this->client->get('/api/merchant/'.$id.'/charges?'.http_build_query($query));
             $content = $response->getBody()->getContents();
             return json_decode($content, true);
