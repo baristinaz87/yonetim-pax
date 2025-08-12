@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Client\EFaturaClient;
+use Carbon\Carbon;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -10,25 +11,8 @@ class MerchantDetailForm extends Component
 {
     private EFaturaClient $eFaturaClient;
     public int $merchantId;
-    public array $data = [
-        "unvan" => null,
-        "email" => null,
-        "phone" => null,
-        "mobile" => null,
-        "tax_office" => null,
-        "tax_number" => null,
-        "default_tax" => null,
-        "tax_override" => null,
-        "confirm" => null,
-        "first_credit" => null,
-        "api_user" => null,
-        "api_pass" => null,
-        "xslt_code_efatura" => null,
-        "xslt_code" => null,
-        "auto_send" => null,
-        "send_email" => null,
-        "status" => null,
-    ];
+    public array $data = [];
+    public array $initialData = [];
 
     public function __construct()
     {
@@ -38,11 +22,35 @@ class MerchantDetailForm extends Component
     public function mount($id): void
     {
         $this->merchantId = $id;
+        $this->getData();
     }
 
-    public function clearMessageSession(): void
+    private function getData(): void
     {
-        session()->remove("message");
+        $response = $this->eFaturaClient->getMerchant($this->merchantId);
+        $setting = $response['data']['setting'] ?? [];
+        if (!empty($setting['last_top_up_at']))
+            $setting['last_top_up_at'] = Carbon::parse($setting['last_top_up_at'])->format('Y-m-d');
+        if (!empty($setting['credit_tracking_at']))
+            $setting['credit_tracking_at'] = Carbon::parse($setting['credit_tracking_at'])->format('Y-m-d');
+        if (!empty($setting['credit_expired_at']))
+            $setting['credit_expired_at'] = Carbon::parse($setting['credit_expired_at'])->format('Y-m-d');
+
+        $this->data = array_merge($this->data, $setting);
+        $this->initialData = $this->data;
+    }
+
+    public function updateCreditFields(): void
+    {
+        $validated = $this->validate([
+            "data.credit_expired_at"  => "nullable|string",
+            "data.credit_tracking_at" => "nullable|string",
+        ]);
+
+        $this->eFaturaClient->updateMerchant($this->merchantId, $validated["data"]);
+
+        session()->flash('updateCreditFieldsMessage', 'Müşteri başarıyla güncellendi.');
+        $this->resetExcept('merchantId');
     }
 
     public function updateSetting(): void
@@ -69,15 +77,23 @@ class MerchantDetailForm extends Component
 
         $this->eFaturaClient->updateMerchant($this->merchantId, $validated["data"]);
 
-        session()->flash('message', 'Müşteri başarıyla kaydedildi.');
+        session()->flash('updateSettingMessage', 'Müşteri başarıyla güncellendi.');
         $this->resetExcept('merchantId');
+    }
+
+    public function resetForm(): void
+    {
+        $this->data = $this->initialData;
+    }
+
+    public function clearMessageSession($key): void
+    {
+        session()->remove($key);
     }
 
     public function render(): View
     {
-        $response = $this->eFaturaClient->getMerchant($this->merchantId);
-        $this->data = array_merge($this->data, $response['data']['setting'] ?? []);
-
+        $this->getData();
         return view('livewire.merchant-detail-form', $this->data);
     }
 }

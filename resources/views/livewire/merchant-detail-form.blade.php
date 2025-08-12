@@ -81,6 +81,107 @@
         </div>
     </div>
     <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
+        <form wire:submit.prevent="updateCreditFields">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="credit" class="block text-sm font-medium text-gray-700 mb-1">
+                        Kalan Kontör
+                    </label>
+                    <input
+                        disabled
+                        type="text"
+                        id="credit"
+                        wire:model.defer="data.credit"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+                <div>
+                    <label for="last_top_up_at" class="block text-sm font-medium text-gray-700 mb-1">
+                        Son Kontör Yükleme Tarihi
+                    </label>
+                    <input
+                        disabled
+                        type="date"
+                        id="last_top_up_at"
+                        wire:model.defer="data.last_top_up_at"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+                <div>
+                    <label for="credit_expired_at" class="block text-sm font-medium text-gray-700 mb-1">
+                        Kontör Bitiş Tarihi
+                    </label>
+                    <input
+                        type="date"
+                        id="credit_expired_at"
+                        wire:model.defer="data.credit_expired_at"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                    />
+                </div>
+                <div>
+                    <label for="credit_tracking_at" class="block text-sm font-medium text-gray-700 mb-1">
+                        Takip Tarihi
+                    </label>
+                    <input
+                        type="date"
+                        id="credit_tracking_at"
+                        wire:model.defer="data.credit_tracking_at"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                    />
+                </div>
+                <div>
+                    <label for="app_status" class="block text-sm font-medium text-gray-700 mb-1">
+                        Uygulama Durumu
+                    </label>
+                    <input
+                        disabled
+                        type="text"
+                        id="app_status"
+                        wire:model.defer="data.app_status"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+                <div>
+                    <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        User ID
+                    </label>
+                    <input
+                        disabled
+                        type="text"
+                        id="user_id"
+                        wire:model.defer="data.user_id"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+            </div>
+            <div class="mt-2">
+                <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded">
+                    Kaydet
+                </button>
+                <button type="button" wire:click="resetForm()" class="bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded border border-gray-300">
+                    Vazgeç
+                </button>
+            </div>
+            @if (session()->has('updateCreditFieldsMessage'))
+                <div class="mt-2 mb-4 px-4 py-2 bg-green-100 text-green-800 rounded relative">
+                    {{ session('updateCreditFieldsMessage') }}
+                    <button wire:click="clearMessageSession('updateCreditFieldsMessage')" type="button" class="absolute right-4 top-2 text-green-800/70 hover:text-green-900" aria-label="Kapat" title="Kapat">
+                        X
+                    </button>
+                </div>
+            @endif
+        </form>
+        <div class="flex justify-between mt-6">
+            <div>
+                <span class="text-2xl font-bold underline">Kontör Hatırlatma Bildirimi</span>
+            </div>
+            <div>
+                <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">SMS GÖNDER</button>
+                <button class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">EMAIL GÖNDER</button>
+            </div>
+        </div>
+    </div>
+    <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
         <form wire:submit.prevent="updateSetting">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Firma Ünvanı -->
@@ -298,15 +399,15 @@
                     <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded">
                         Kaydet
                     </button>
-                    <button type="reset" class="bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded border border-gray-300">
+                    <button type="button" wire:click="resetForm()" class="bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded border border-gray-300">
                         Vazgeç
                     </button>
                 </div>
             </div>
-            @if (session()->has('message'))
+            @if (session()->has('updateSettingMessage'))
                 <div class="mt-2 mb-4 px-4 py-2 bg-green-100 text-green-800 rounded relative">
-                    {{ session('message') }}
-                    <button wire:click="clearMessageSession()" type="button" class="absolute right-4 top-2 text-green-800/70 hover:text-green-900" aria-label="Kapat" title="Kapat">
+                    {{ session('updateSettingMessage') }}
+                    <button wire:click="clearMessageSession('updateSettingMessage')" type="button" class="absolute right-4 top-2 text-green-800/70 hover:text-green-900" aria-label="Kapat" title="Kapat">
                         X
                     </button>
                 </div>
