@@ -79,4 +79,41 @@ class EFaturaClient
             dd($e->getMessage());
         }
     }
+
+    public function getMerchantNotes(string $id, int $page, int $perPage): array
+    {
+        try {
+            $query = ["page" => $page, "per_page" => $perPage, "sort" => "-created_at"];
+            $response = $this->client->get('/api/merchant/'.$id.'/notes?'.http_build_query($query));
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
+    public function createMerchantNote($values): array
+    {
+        try {
+            $response = $this->client->post('/api/user-notes', ["json" => $values]);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
+    public function removeMerchantNote(string $id): array
+    {
+        try {
+            $response = $this->client->delete('/api/user-notes/'. $id);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
 }
