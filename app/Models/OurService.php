@@ -14,6 +14,7 @@ class OurService extends Model
         'description',
         'link',
         'status',
+        'image',
     ];
 
     protected $casts = [

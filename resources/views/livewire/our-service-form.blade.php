@@ -57,6 +57,41 @@
                         </select>
                         <x-input-error :messages="$errors->get('status')" class="mt-2" />
                     </div>
+
+                    <div>
+                        <x-input-label for="image" :value="__('Logo')" />
+                        <input 
+                            type="file" 
+                            id="image" 
+                            wire:model="image" 
+                            class="mt-1 block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-indigo-50 file:text-indigo-700
+                                hover:file:bg-indigo-100"
+                            accept="image/*"
+                        />
+                        <div class="mt-2 text-sm text-gray-500">
+                            Logo en az 250px genişliğinde ve en fazla 1MB boyutunda olmalıdır.
+                        </div>
+                        <x-input-error :messages="$errors->get('image')" class="mt-2" />
+
+                        @if($isEditing && $service->image)
+                            <div class="mt-4">
+                                <div class="mb-2">
+                                    <img src="{{ Storage::url($service->image) }}" alt="Mevcut Logo" class="max-w-[250px]">
+                                </div>
+                                <button 
+                                    type="button" 
+                                    wire:click="removeImage" 
+                                    class="text-red-600 hover:text-red-900 text-sm font-medium"
+                                >
+                                    Logoyu Kaldır
+                                </button>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-end mt-6 space-x-3">

@@ -17,7 +17,7 @@ class OurServiceController extends Controller
     {
         $services = OurService::all();
 
-        return $services;
+        return OurServiceResource::collection($services);
     }
 
     /**
