@@ -18,6 +18,8 @@ class MerchantNotesTable extends Component
 
     public string $description = "";
 
+    public ?int $selectedNoteId = null;
+
     public function __construct()
     {
         $this->eFaturaClient = new EfaturaClient();
@@ -47,9 +49,24 @@ class MerchantNotesTable extends Component
         $this->resetExcept('merchantId');
     }
 
-    public function removeNote($id): void
+    public function openDeleteModal($id): void
     {
-        $this->eFaturaClient->removeMerchantNote($id);
+        $this->selectedNoteId = $id;
+        $this->dispatch('open-delete-modal');
+    }
+
+    public function closeDeleteModal(): void
+    {
+        $this->selectedNoteId = null;
+        $this->dispatch('close-delete-modal');
+    }
+
+    public function removeNote(): void
+    {
+        if ($this->selectedNoteId == null) return;
+        $this->eFaturaClient->removeMerchantNote($this->selectedNoteId);
+        $this->selectedNoteId = null;
+        $this->dispatch('close-delete-modal');
         session()->flash('message', 'Not başarıyla silindi.');
     }
 
