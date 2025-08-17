@@ -13,6 +13,7 @@ class MerchantDetailForm extends Component
     public int $merchantId;
     public array $data = [];
     public array $initialData = [];
+    public array $creditFormData = [];
 
     public function __construct()
     {
@@ -38,6 +39,23 @@ class MerchantDetailForm extends Component
 
         $this->data = array_merge($this->data, $setting);
         $this->initialData = $this->data;
+        $this->creditFormData["shop_name"] = $setting["shop_name"];
+    }
+
+    public function addCredit(): void
+    {
+        $validated = $this->validate([
+            "creditFormData.credit"  => "required|integer",
+            "creditFormData.amount"  => "required|numeric",
+            "creditFormData.description"  => "required|string",
+        ]);
+
+        $validated["creditFormData"]["user_id"] = $this->merchantId;
+        $this->eFaturaClient->addCredit($validated["creditFormData"]);
+        session()->flash('addCreditMessage', 'Kredi başarıyla yüklendi.');
+        $this->dispatch('close-add-credit-modal');
+        $this->dispatch('credit-added');
+        $this->resetExcept('merchantId');
     }
 
     public function updateCreditFields(): void
@@ -89,6 +107,16 @@ class MerchantDetailForm extends Component
     public function clearMessageSession($key): void
     {
         session()->remove($key);
+    }
+
+    public function openAddCreditModal(): void
+    {
+        $this->dispatch('open-add-credit-modal');
+    }
+
+    public function closeAddCreditModal(): void
+    {
+        $this->dispatch('close-add-credit-modal');
     }
 
     public function render(): View

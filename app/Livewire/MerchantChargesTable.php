@@ -8,6 +8,8 @@ use Livewire\Component;
 
 class MerchantChargesTable extends Component
 {
+    protected $listeners = ['credit-added' => '$refresh'];
+
     public string $merchantId;
 
     private EFaturaClient $eFaturaClient;

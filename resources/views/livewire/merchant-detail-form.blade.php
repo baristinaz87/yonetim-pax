@@ -21,6 +21,14 @@
 @endphp
 
 <div>
+    @if (session()->has('addCreditMessage'))
+        <div class="m-5 px-4 py-2 bg-green-100 text-green-800 rounded relative">
+            {{ session('addCreditMessage') }}
+            <button wire:click="clearMessageSession('addCreditMessage')" type="button" class="absolute right-4 top-2 text-green-800/70 hover:text-green-900" aria-label="Kapat" title="Kapat">
+                X
+            </button>
+        </div>
+    @endif
     <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
         <!-- Üst Başlık ve Butonlar -->
         <div class="flex items-center justify-between mb-6">
@@ -32,10 +40,60 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                 </a>
-                <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">+ Kontör Yükle</button>
+                <button wire:click="openAddCreditModal()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">+ Kontör Yükle</button>
                 <span class="{{ $colors[$status ?? ""] ?? "bg-gray-300" }} text-white px-4 py-2 rounded">
                      {{ $statuses[$status ?? ""] ?? "Durum Boş" }}
                 </span>
+            </div>
+            <div wire:ignore id="add-credit-modal" tabindex="-1" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+                <div class="relative p-4 w-full max-w-2xl max-h-full">
+                    <div class="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
+                        {{-- Header --}}
+                        <div class="flex items-center justify-between px-6 py-4 border-b">
+                            <h3 class="text-lg font-semibold">E-Fatura Kontör Yükleme</h3>
+                            <button wire:click="closeAddCreditModal()" type="button" class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                                </svg>
+                                <span class="sr-only">Kapat</span>
+                            </button>
+                        </div>
+                        {{-- ADD CREDIT FORM --}}
+                        <form class="px-6 py-5 space-y-5" wire:submit.prevent="addCredit">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium">Mağaza <span class="text-red-600">*</span></label>
+                                <input disabled type="text" placeholder="ÖR: abc123.myshopify.com"
+                                       class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                       wire:model.defer="creditFormData.shop_name" required>
+                                @error('creditFormData.shop_name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium">Kontör Adedi <span class="text-red-600">*</span></label>
+                                <input type="number" min="1" step="1" placeholder="ÖR: 500"
+                                       class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                                       wire:model.defer="creditFormData.credit" required>
+                                @error('creditFormData.credit') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium">Tutar (USD) <span class="text-red-600">*</span></label>
+                                <input type="number" min="0" step="0.01" placeholder="ÖR: 50"
+                                       class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                                       wire:model.defer="creditFormData.amount" required>
+                                @error('creditFormData.amount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="mb-1.5 block text-sm font-medium">Açıklama <span class="text-red-600">*</span></label>
+                                <textarea rows="6" placeholder="ÖR: 500 Kontör Bedeli"
+                                          class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                                          wire:model.defer="creditFormData.description" required></textarea>
+                                @error('creditFormData.description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <button type="submit" class="block bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded">
+                                Yükle
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- Bilgi Kartı -->
@@ -418,4 +476,35 @@
             @endforeach
         </form>
     </div>
+    <script>
+        (function () {
+            let modalInstance = null;
+
+            function getInstance() {
+                const el = document.getElementById('add-credit-modal');
+                if (!el) return null;
+
+                const Ctor = window.Modal || (window.flowbite && window.flowbite.Modal);
+                if (!Ctor) {
+                    console.warn('Flowbite Modal constructor bulunamadı.');
+                    return null;
+                }
+                modalInstance ||= new Ctor(el, {
+                    placement: 'center',
+                    backdrop: 'dynamic',
+                    closable: true,
+                });
+
+                return modalInstance;
+            }
+
+            document.addEventListener('open-add-credit-modal', () => {
+                getInstance()?.show();
+            });
+
+            document.addEventListener('close-add-credit-modal', () => {
+                getInstance()?.hide();
+            });
+        })();
+    </script>
 </div>
