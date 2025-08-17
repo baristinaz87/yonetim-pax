@@ -89,7 +89,11 @@
                     @endforeach
                 </select>
             </th>
-            <th></th>
+            <th class="px-1">
+                <button wire:click="resetFilters()" class="bg-blue-500 text-white px-2 py-3 rounded hover:bg-blue-600">
+                    Filtreleri Sıfırla
+                </button>
+            </th>
         </tr>
         </thead>
         <tbody>
