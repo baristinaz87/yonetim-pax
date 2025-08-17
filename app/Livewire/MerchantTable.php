@@ -31,6 +31,15 @@ class MerchantTable extends Component
         $this->selectedStatus = $status;
     }
 
+    public function resetFilters(): void
+    {
+        $this->selectedStatus = null;
+        $this->unvanSearch = null;
+        $this->shopDomainSearch = null;
+        $this->sortField = null;
+        $this->sortDirection = 'desc';
+    }
+
     public function setSort(string $sortField): void
     {
         $this->sortField = $sortField;
