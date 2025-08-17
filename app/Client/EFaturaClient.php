@@ -116,4 +116,16 @@ class EFaturaClient
             dd($e->getMessage());
         }
     }
+
+    public function getMerchantStatusReport(): array
+    {
+        try {
+            $response = $this->client->get('/api/merchants/status-report');
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
 }

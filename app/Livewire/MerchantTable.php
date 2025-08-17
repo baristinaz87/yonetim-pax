@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Client\EFaturaClient;
 use Illuminate\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class MerchantTable extends Component
@@ -22,6 +23,12 @@ class MerchantTable extends Component
     public function __construct()
     {
         $this->eFaturaClient = new EfaturaClient();
+    }
+
+    #[On('status-filter-changed')]
+    public function handleStatusFilterChanged(string $status): void
+    {
+        $this->selectedStatus = $status;
     }
 
     public function setSort(string $sortField): void

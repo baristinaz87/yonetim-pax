@@ -9,7 +9,9 @@
         "on_track"          => "Takipteki Müşteriler",
         "wait_return"       => "Dönüş Beklenenler",
         "wait_activation"   => "Akt. Bekleyenler",
-        "wait_deactivation" => "Deakt. Bekleyenler"
+        "wait_deactivation" => "Deakt. Bekleyenler",
+        "credit_expiring"   => "Kontör Tarihi Yaklaşan",
+        "credit_expired"    => "Kontörü Bitenler",
     ];
 
     $colors = [
@@ -81,7 +83,7 @@
             <th></th>
             <th></th>
             <th>
-                <select id="status" wire:change="$set('selectedStatus', $event.target.value)" class="min-w-[200px] block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <select id="status" wire:model="selectedStatus" wire:change="$set('selectedStatus', $event.target.value)" class="min-w-[200px] block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
                     @foreach($statuses as $key => $value)
                         <option value="{{ $key }}">{{ $value }}</option>
                     @endforeach
