@@ -34,6 +34,18 @@ class EFaturaClient
         }
     }
 
+    public function addCredit($values): array
+    {
+        try {
+            $response = $this->client->post('/api/merchant/createCharge', ["json" => $values]);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
     public function updateMerchant(int $id, $values): array
     {
         try {
