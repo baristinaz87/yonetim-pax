@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
 
-Route::view('dashboard', 'dashboard')
+Route::redirect('/dashboard', '/merchants')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
