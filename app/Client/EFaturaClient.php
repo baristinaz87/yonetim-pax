@@ -34,6 +34,18 @@ class EFaturaClient
         }
     }
 
+    public function addCredit($values): array
+    {
+        try {
+            $response = $this->client->post('/api/merchant/createCharge', ["json" => $values]);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
     public function updateMerchant(int $id, $values): array
     {
         try {
@@ -109,6 +121,18 @@ class EFaturaClient
     {
         try {
             $response = $this->client->delete('/api/user-notes/'. $id);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
+    public function getMerchantStatusReport(): array
+    {
+        try {
+            $response = $this->client->get('/api/merchants/status-report');
             $content = $response->getBody()->getContents();
             return json_decode($content, true);
         } catch (GuzzleException $e) {
