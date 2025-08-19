@@ -28,9 +28,16 @@
         $tmp = $item["setting"] ?? [];
         $tmp["merchantId"] = $item["id"];
         return $tmp;
-    }, $data)
+    }, $data);
+
+    $isFilterButtonHide = empty($selectedStatus) && empty($unvanSearch) && empty($shopDomainSearch) && empty($sortField);
 @endphp
 <div>
+    @if(!$isFilterButtonHide)
+        <button wire:click="resetFilters()" class="bg-blue-500 text-white px-2 py-3 mb-4 rounded hover:bg-blue-600">
+            Filtreleri Sıfırla
+        </button>
+    @endif
     <table class="w-full text-sm text-left rtl:text-right text-gray-500">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
         <tr>
@@ -89,11 +96,7 @@
                     @endforeach
                 </select>
             </th>
-            <th class="px-1">
-                <button wire:click="resetFilters()" class="bg-blue-500 text-white px-2 py-3 rounded hover:bg-blue-600">
-                    Filtreleri Sıfırla
-                </button>
-            </th>
+            <th></th>
         </tr>
         </thead>
         <tbody>
