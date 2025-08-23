@@ -120,7 +120,7 @@
                     </span>
                 </td>
                 <td class="px-6 py-4">
-                    <a href="{{ route('merchant-detail', ['id' => $merchant['merchantId']]) }}" class="font-medium text-blue-600 hover:underline">Düzenle</a>
+                    <a target="_blank" href="{{ route('merchant-detail', ['id' => $merchant['merchantId']]) }}" class="font-medium text-blue-600 hover:underline">Düzenle</a>
                 </td>
             </tr>
         @endforeach
