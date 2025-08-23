@@ -12,7 +12,7 @@ class MerchantTable extends Component
     private EFaturaClient $eFaturaClient;
 
     public int $page = 1;
-    public int $perPage = 10;
+    public int $perPage = 100000;
     public int $total = 10;
     public ?string $sortField = null;
     public string $sortDirection = "desc";
