@@ -29,6 +29,9 @@
             </button>
         </div>
     @endif
+    @if ($data["app_status"] != "Aktif")
+        <div class="my-2 px-4 py-2 bg-red-200 rounded text-red-600 text-sm">Uygulama Silinmiş</div>
+    @endif
     <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
         <!-- Üst Başlık ve Butonlar -->
         <div class="flex items-center justify-between mb-6">
