@@ -102,7 +102,7 @@
         <tbody>
         @foreach($merchants as $merchant)
             <tr class="bg-white border-b border-gray-200 hover:bg-gray-200">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-pre-wrap break-words">
                     {{ $merchant['unvan'] ?? '' }}
                 </th>
                 <td class="px-6 py-4">
