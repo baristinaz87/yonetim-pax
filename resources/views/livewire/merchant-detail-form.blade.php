@@ -29,7 +29,7 @@
             </button>
         </div>
     @endif
-    @if ($data["app_status"] != "Aktif")
+    @if ($data["app_status"] != "active")
         <div class="my-2 px-4 py-2 bg-red-200 rounded text-red-600 text-sm">Uygulama Silinmiş</div>
     @endif
     <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
@@ -194,13 +194,10 @@
                     <label for="app_status" class="block text-sm font-medium text-gray-700 mb-1">
                         Uygulama Durumu
                     </label>
-                    <input
-                        disabled
-                        type="text"
-                        id="app_status"
-                        wire:model.defer="data.app_status"
-                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
+                    <select disabled id="app_status" wire:model.defer="data.app_status" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <option value="active">Aktif</option>
+                        <option value="passive">Uygulama Silinmiş</option>
+                    </select>
                 </div>
                 <div>
                     <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">
