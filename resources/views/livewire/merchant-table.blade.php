@@ -116,7 +116,7 @@
         <tbody>
         @foreach($merchants as $merchant)
             <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-pre-wrap break-words">
                     {{ !empty($merchant['created_at']) ? Carbon::parse($merchant['created_at'])->format('d/m/Y') : '' }}
                 </th>
                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
@@ -140,7 +140,7 @@
                     </span>
                 </td>
                 <td class="px-6 py-4">
-                    <a href="{{ route('merchant-detail', ['id' => $merchant['merchant_id']]) }}" class="font-medium text-blue-600 hover:underline">Düzenle</a>
+                    <a target="_blank" href="{{ route('merchant-detail', ['id' => $merchant['merchant_id']]) }}" class="font-medium text-blue-600 hover:underline">Düzenle</a>
                 </td>
             </tr>
         @endforeach
@@ -151,6 +151,17 @@
         <span class="text-sm font-normal text-gray-500 mb-4 md:mb-0 block w-full md:inline md:w-auto">
             <span class="font-semibold text-gray-900">{{ $total_records }}</span> kayıttan <span class="font-semibold text-gray-900">{{ (($current_page - 1) * $per_page) + 1 }} - {{ $current_page * $per_page }}</span> arası gösteriliyor.
         </span>
+        <div class="flex items-center gap-2">
+            <label for="perPage" class="text-sm text-gray-500">Sayfa başına:</label>
+            <select id="perPage" wire:model="perPage" wire:change="$set('perPage', $event.target.value)"
+                    class="min-w-[75px] border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring focus:ring-blue-200">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="100000">Tümü</option>
+            </select>
+        </div>
         @php
             $paginatorButtonCount = 2;
             $start = max(1, $current_page - $paginatorButtonCount);
