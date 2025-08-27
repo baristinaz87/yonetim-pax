@@ -260,8 +260,31 @@
             <div>
                 <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">SMS GÖNDER</button>
                 <button class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">EMAIL GÖNDER</button>
+                @if(!empty($data['credit_expired_at']))
+                    <button wire:click="addToGoogleCalendar" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        TAKVİME EKLE
+                    </button>
+                @endif
             </div>
         </div>
+
+        {{-- Google Calendar Messages --}}
+        @if (session()->has('calendarMessage'))
+            <div class="mt-4 px-4 py-2 bg-green-100 text-green-800 rounded relative">
+                {{ session('calendarMessage') }}
+                <button wire:click="clearMessageSession('calendarMessage')" type="button" class="absolute right-4 top-2 text-green-800/70 hover:text-green-900" aria-label="Kapat" title="Kapat">
+                    X
+                </button>
+            </div>
+        @endif
+        @if (session()->has('calendarError'))
+            <div class="mt-4 px-4 py-2 bg-red-100 text-red-800 rounded relative">
+                {{ session('calendarError') }}
+                <button wire:click="clearMessageSession('calendarError')" type="button" class="absolute right-4 top-2 text-red-800/70 hover:text-red-900" aria-label="Kapat" title="Kapat">
+                    X
+                </button>
+            </div>
+        @endif
     </div>
     <div class="p-6 bg-white shadow-sm sm:rounded-lg m-6">
         <form wire:submit.prevent="updateSetting">
@@ -528,6 +551,11 @@
 
             document.addEventListener('close-add-credit-modal', () => {
                 getInstance()?.hide();
+            });
+
+            // Google OAuth redirect listener
+            document.addEventListener('redirect-to-google', (event) => {
+                window.location.href = event.detail.url;
             });
         })();
     </script>
