@@ -3,13 +3,17 @@
 namespace App\Livewire;
 
 use App\Client\EFaturaClient;
+use App\Services\GoogleCalendarService;
 use Carbon\Carbon;
 use Illuminate\View\View;
 use Livewire\Component;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class MerchantDetailForm extends Component
 {
     private EFaturaClient $eFaturaClient;
+    private GoogleCalendarService $googleCalendarService;
     public int $merchantId;
     public array $data = [];
     public array $initialData = [];
@@ -18,6 +22,7 @@ class MerchantDetailForm extends Component
     public function __construct()
     {
         $this->eFaturaClient = new EfaturaClient();
+        $this->googleCalendarService = new GoogleCalendarService();
     }
 
     public function mount($id): void
@@ -120,6 +125,77 @@ class MerchantDetailForm extends Component
     public function closeAddCreditModal(): void
     {
         $this->dispatch('close-add-credit-modal');
+    }
+
+    /**
+     * Add credit expiration reminder to Google Calendar
+     */
+    public function addToGoogleCalendar(): void
+    {
+        try {
+            // Check if credit expired date is set
+            if (empty($this->data['credit_expired_at'])) {
+                session()->flash('calendarMessage', 'Kontör bitiş tarihi ayarlanmamış.');
+                return;
+            }
+
+            // Check if Google access token exists in session
+            $accessToken = Session::get('google_access_token');
+            if (!$accessToken) {
+                // Redirect to Google OAuth using JavaScript
+                $authUrl = $this->googleCalendarService->getAuthUrl();
+                $this->dispatch('redirect-to-google', url: $authUrl);
+                return;
+            }
+
+            // Create calendar event
+            $shopName = $this->data['shop_name'] ?? 'Mağaza';
+            $creditExpiredAt = $this->data['credit_expired_at'];
+
+            $event = $this->googleCalendarService->createCreditReminderEvent(
+                $shopName,
+                $creditExpiredAt,
+                $accessToken
+            );
+
+            session()->flash('calendarMessage', 'Kontör hatırlatma takviminize eklendi.');
+            $this->dispatch('calendar-event-added');
+
+        } catch (\Exception $e) {
+            session()->flash('calendarError', 'Takvim olayını eklerken hata oluştu: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle Google OAuth callback
+     */
+    public function handleGoogleCallback(Request $request): void
+    {
+        try {
+            $code = $request->get('code');
+            if (!$code) {
+                throw new \Exception('Authorization code not received');
+            }
+
+            $accessToken = $this->googleCalendarService->handleCallback($code);
+
+            // Store token in session
+            Session::put('google_access_token', $accessToken);
+
+            session()->flash('calendarMessage', 'Google Calendar bağlantısı başarılı. Şimdi takvim olayını ekleyebilirsiniz.');
+            $this->dispatch('google-authorized');
+
+        } catch (\Exception $e) {
+            session()->flash('calendarError', 'Google yetkilendirme hatası: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get Google OAuth authorization URL
+     */
+    public function getGoogleAuthUrl(): string
+    {
+        return $this->googleCalendarService->getAuthUrl();
     }
 
     public function render(): View

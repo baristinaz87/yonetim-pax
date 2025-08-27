@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GoogleAuthController;
 
 Route::redirect('/', '/login');
 
@@ -31,5 +32,10 @@ Route::view('our-services/{serviceId}/edit', 'our-service-form')
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
+
+// Google OAuth callback
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
+    ->middleware(['auth'])
+    ->name('google.callback');
 
 require __DIR__.'/auth.php';
