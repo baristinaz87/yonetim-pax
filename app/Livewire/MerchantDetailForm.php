@@ -36,6 +36,9 @@ class MerchantDetailForm extends Component
             $setting['credit_tracking_at'] = Carbon::parse($setting['credit_tracking_at'])->format('Y-m-d');
         if (!empty($setting['credit_expired_at']))
             $setting['credit_expired_at'] = Carbon::parse($setting['credit_expired_at'])->format('Y-m-d');
+        if (!empty($setting['created_at']))
+            $setting['created_at'] = Carbon::parse($setting['created_at'])->format('Y-m-d');
+        $setting["app_updated_at"] = $response['data']['password_updated_at'] ?? null;
 
         $this->data = array_merge($this->data, $setting);
         $this->initialData = $this->data;

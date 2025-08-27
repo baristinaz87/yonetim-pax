@@ -26,13 +26,14 @@
 
     $merchants = array_map(function ($item) {
         $tmp = $item["setting"] ?? [];
-        $tmp["merchantId"] = $item["id"];
+        $tmp["merchant_id"] = $item["id"];
+        $tmp["app_updated_at"] = $item["password_updated_at"];
         return $tmp;
     }, $data);
 
     $isFilterButtonHide = empty($selectedStatus) && empty($unvanSearch) && empty($shopDomainSearch) && empty($sortField);
 @endphp
-<div>
+<div class="overflow-x-auto bg-white rounded-lg shadow-sm pb-6">
     @if(!$isFilterButtonHide)
         <button wire:click="resetFilters()" class="bg-blue-500 text-white px-2 py-3 mb-4 rounded hover:bg-blue-600">
             Filtreleri Sıfırla
@@ -41,8 +42,19 @@
     <table class="w-full text-sm text-left rtl:text-right text-gray-500">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
         <tr>
+            <th scope="col" class="px-6 py-3">
+                <div class="flex items-center {{ $sortField == "setting_created_at" ? "active" : "" }}">
+                    Kayıt Tarihi
+                    <div wire:click="setSort('setting_created_at')" class="px-2 cursor-pointer">
+                        <svg class="w-4 h-4 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 15 4 4 4-4m0-6-4-4-4 4"></path>
+                        </svg>
+                    </div>
+                </div>
+            </th>
             <th scope="col" class="px-6 py-3">Firma</th>
             <th scope="col" class="px-6 py-3">Shopify</th>
+            <th scope="col" class="px-6 py-3">Uygulama Güncelleme Tarihi</th>
             <th scope="col" class="px-6 py-3">
                 <div class="flex items-center {{ $sortField == "setting_credit_expired_at" ? "active" : "" }}">
                     Kontör Bitme Tarihi
@@ -63,10 +75,11 @@
                     </div>
                 </div>
             </th>
-            <th scope="col" class="px-6 py-3">Durum</th>
+            <th scope="col" class="px-6 py-3 min-w-[200px]">Durum</th>
             <th scope="col" class="px-6 py-3">İşlemler</th>
         </tr>
         <tr>
+            <th></th>
             <th scope="col" class="px-6 py-3">
                 <div class="relative mt-1">
                     <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
@@ -89,8 +102,9 @@
             </th>
             <th></th>
             <th></th>
+            <th></th>
             <th>
-                <select id="status" wire:model="selectedStatus" wire:change="$set('selectedStatus', $event.target.value)" class="min-w-[200px] block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                <select id="status" wire:model="selectedStatus" wire:change="$set('selectedStatus', $event.target.value)" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
                     @foreach($statuses as $key => $value)
                         <option value="{{ $key }}">{{ $value }}</option>
                     @endforeach
@@ -101,12 +115,18 @@
         </thead>
         <tbody>
         @foreach($merchants as $merchant)
-            <tr class="bg-white border-b border-gray-200 hover:bg-gray-200">
+            <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-pre-wrap break-words">
+                    {{ !empty($merchant['created_at']) ? Carbon::parse($merchant['created_at'])->format('d/m/Y') : '' }}
+                </th>
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                     {{ $merchant['unvan'] ?? '' }}
                 </th>
                 <td class="px-6 py-4">
                     {{ $merchant['shop_domain'] ?? '' }}
+                </td>
+                <td class="px-6 py-4">
+                    {{ !empty($merchant['app_updated_at']) ? Carbon::parse($merchant['app_updated_at'])->format('d/m/Y') : '' }}
                 </td>
                 <td class="px-6 py-4">
                     {{ !empty($merchant['credit_expired_at']) ? Carbon::parse($merchant['credit_expired_at'])->format('d/m/Y') : '' }}
@@ -120,7 +140,7 @@
                     </span>
                 </td>
                 <td class="px-6 py-4">
-                    <a target="_blank" href="{{ route('merchant-detail', ['id' => $merchant['merchantId']]) }}" class="font-medium text-blue-600 hover:underline">Düzenle</a>
+                    <a target="_blank" href="{{ route('merchant-detail', ['id' => $merchant['merchant_id']]) }}" class="font-medium text-blue-600 hover:underline">Düzenle</a>
                 </td>
             </tr>
         @endforeach

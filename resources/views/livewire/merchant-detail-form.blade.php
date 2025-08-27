@@ -211,6 +211,30 @@
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                 </div>
+                <div>
+                    <label for="app_updated_at" class="block text-sm font-medium text-gray-700 mb-1">
+                        Uygulama Güncelleme Tarihi
+                    </label>
+                    <input
+                        disabled
+                        type="date"
+                        id="app_updated_at"
+                        wire:model.defer="data.app_updated_at"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+                <div>
+                    <label for="created_at" class="block text-sm font-medium text-gray-700 mb-1">
+                        Kayıt Tarihi
+                    </label>
+                    <input
+                        disabled
+                        type="date"
+                        id="created_at"
+                        wire:model.defer="data.created_at"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
             </div>
             <div class="mt-2">
                 <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded">
