@@ -54,7 +54,16 @@
             </th>
             <th scope="col" class="px-6 py-3">Firma</th>
             <th scope="col" class="px-6 py-3">Shopify</th>
-            <th scope="col" class="px-6 py-3">Uygulama Güncelleme Tarihi</th>
+            <th scope="col" class="px-6 py-3">
+                <div class="flex items-center {{ $sortField == "password_updated_at" ? "active" : "" }}">
+                    Uygulama Güncelleme Tarihi
+                    <div wire:click="setSort('password_updated_at')" class="px-2 cursor-pointer">
+                        <svg class="w-4 h-4 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 15 4 4 4-4m0-6-4-4-4 4"></path>
+                        </svg>
+                    </div>
+                </div>
+            </th>
             <th scope="col" class="px-6 py-3">
                 <div class="flex items-center {{ $sortField == "setting_credit_expired_at" ? "active" : "" }}">
                     Kontör Bitme Tarihi
