@@ -116,11 +116,11 @@
         <tbody>
         @foreach($merchants as $merchant)
             <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-pre-wrap break-words">
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900">
                     {{ !empty($merchant['created_at']) ? Carbon::parse($merchant['created_at'])->format('d/m/Y') : '' }}
                 </th>
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                    {{ $merchant['unvan'] ?? '' }}
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 break-words">
+                    {{ $merchant['unvan'] ? trim($merchant['unvan']) : '' }}
                 </th>
                 <td class="px-6 py-4">
                     {{ $merchant['shop_domain'] ?? '' }}
