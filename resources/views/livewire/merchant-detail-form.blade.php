@@ -257,8 +257,8 @@
             <div>
                 <span class="text-2xl font-bold underline">Kontör Hatırlatma Bildirimi</span>
             </div>
-            <div>
-                <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">SMS GÖNDER</button>
+            <div class="flex gap-2">
+                <livewire:wp-message-modal :settings="$data" wire:key="wp-message-modal" />
                 <button class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">EMAIL GÖNDER</button>
                 @if(!empty($data['credit_expired_at']))
                     <button wire:click="addToGoogleCalendar" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
