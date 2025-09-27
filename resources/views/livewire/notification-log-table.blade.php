@@ -25,7 +25,7 @@
                     {{ $notification["type"] ?? "" }}
                 </td>
                 <td class="px-6 py-4">
-                    {{ $notification["phone"] ?? "" }}
+                    {{ $notification["addresses"] ?? "" }}
                 </td>
                 <td class="px-6 py-4">
                     {{ $notification["template_id"] ?? "-" }}
