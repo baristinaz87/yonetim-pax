@@ -92,7 +92,7 @@ class MerchantDetailForm extends Component
             "data.tax_override" => "required|boolean",
             "data.confirm" => "required|boolean",
             "data.first_credit" => "required|boolean",
-            "data.auto_send" => "required|boolean",
+            "data.auto_send" => "required",
             "data.send_email" => "required|boolean",
             "data.api_user" => "nullable|string",
             "data.api_pass" => "nullable|string",

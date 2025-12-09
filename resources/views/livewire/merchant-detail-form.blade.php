@@ -471,8 +471,9 @@
                         Otomatik Fatura <span class="text-red-500">*</span>
                     </label>
                     <select id="auto_send" wire:model.defer="data.auto_send" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
-                        <option value="1">Evet</option>
                         <option value="0">Hayır</option>
+                        <option value="1">Evet - Sipariş Alındığında</option>
+                        <option value="2">Evet - Kargoya Verildiğinde</option>
                     </select>
                 </div>
 
