@@ -235,6 +235,18 @@
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                 </div>
+                <div>
+                    <label for="auto_load_credit" class="block text-sm font-medium text-gray-700 mb-1">
+                        Otomatik Kontör Yükleme
+                    </label>
+                    <select id="auto_load_credit" wire:model.defer="data.auto_load_credit" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="0">Pasif</option>
+                        <option value="1">500 Kontör $50</option>
+                        <option value="2">1000 Kontör $89</option>
+                        <option value="3">2500 Kontör $199</option>
+                        <option value="4">5000 Kontör $359</option>
+                    </select>
+                </div>
             </div>
             <div class="mt-2">
                 <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded">

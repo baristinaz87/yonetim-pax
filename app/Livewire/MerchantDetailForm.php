@@ -71,6 +71,7 @@ class MerchantDetailForm extends Component
         $validated = $this->validate([
             "data.credit_expired_at"  => "nullable|string",
             "data.credit_tracking_at" => "nullable|string",
+            "data.auto_load_credit" => "required|integer",
         ]);
 
         $this->eFaturaClient->updateMerchant($this->merchantId, $validated["data"]);
