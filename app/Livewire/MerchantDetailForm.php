@@ -99,6 +99,7 @@ class MerchantDetailForm extends Component
             "data.api_pass" => "nullable|string",
             "data.xslt_code_efatura" => "nullable|string",
             "data.xslt_code" => "nullable|string",
+            "data.add_order_date" => "required|boolean",
             "data.status" => "nullable|string",
         ]);
 
