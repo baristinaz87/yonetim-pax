@@ -477,6 +477,17 @@
                     />
                 </div>
 
+                <!-- Sipariş Tarihi Faturaya Ekleme -->
+                <div>
+                    <label for="add_order_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        Sipariş Tarihi Faturaya Ekleme
+                    </label>
+                    <select id="add_order_date" wire:model.defer="data.add_order_date" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="0">Pasif</option>
+                        <option value="1">Aktif</option>
+                    </select>
+                </div>
+
                 <!-- Otomatik Fatura -->
                 <div>
                     <label for="auto_send" class="block text-sm font-medium text-gray-700 mb-1">
