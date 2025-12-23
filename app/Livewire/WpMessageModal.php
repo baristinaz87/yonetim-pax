@@ -68,7 +68,7 @@ class WpMessageModal extends Component
         //Mesaj gönderimi başarılı ise
         if (!empty($response["messageId"])) {
             $notificationValues["myshopify_domain"] = $validated["formData"]["shop_myshopify_domain"];
-            $notificationValues["phone"] = implode(",", $validated["formData"]["phones"]);
+            $notificationValues["addresses"] = implode(",", $validated["formData"]["phones"]);
             $notificationValues["type"] = ProviderTypeConstant::WP_PROVIDER;
             $notificationValues["app"] = AppTypeConstant::E_FATURA;
             $notificationValues["payload"]["message_id"] = $response["messageId"];

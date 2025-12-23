@@ -13,7 +13,7 @@ class NotificationLog extends Model
         'myshopify_domain',
         'app',
         'type',
-        'phone',
+        'addresses',
         'template_id',
         'payload',
     ];
