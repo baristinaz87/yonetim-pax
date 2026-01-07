@@ -480,11 +480,11 @@
                 <!-- Sipariş Tarihi Faturaya Ekleme -->
                 <div>
                     <label for="add_order_date" class="block text-sm font-medium text-gray-700 mb-1">
-                        Fatura Tarihi
+                        Faturada Sipariş Tarihi
                     </label>
                     <select id="add_order_date" wire:model.defer="data.add_order_date" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
-                        <option value="0">Faturanın Kesilme Tarihi</option>
-                        <option value="1">Siparişin Oluşturulma Tarihi</option>
+                        <option value="0">Gösterilsin</option>
+                        <option value="1">Gösterilmesin</option>
                     </select>
                 </div>
 
@@ -498,6 +498,17 @@
                         <option value="1">Evet - Sipariş Alındığında</option>
                         <option value="2">Evet - Kargoya Verildiğinde</option>
                     </select>
+                </div>
+                <div>
+                    <label for="auto_fulfillment_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        Otomatik Fatura (Fulfillment) Başlangıç Tarihi
+                    </label>
+                    <input
+                        type="datetime-local"
+                        id="auto_fulfillment_date"
+                        wire:model.defer="data.auto_fulfillment_date"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                    />
                 </div>
 
                 <!-- E-Mail Fatura Gönderimi -->

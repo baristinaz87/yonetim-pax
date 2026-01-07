@@ -43,6 +43,8 @@ class MerchantDetailForm extends Component
             $setting['credit_expired_at'] = Carbon::parse($setting['credit_expired_at'])->format('Y-m-d');
         if (!empty($setting['created_at']))
             $setting['created_at'] = Carbon::parse($setting['created_at'])->format('Y-m-d');
+        if (!empty($setting['auto_fulfillment_date']))
+            $setting['auto_fulfillment_date'] = Carbon::parse($setting['auto_fulfillment_date'])->format('Y-m-d\TH:i:s');
         $setting["app_updated_at"] = $response['data']['password_updated_at'] ?? null;
 
         $this->data = array_merge($this->data, $setting);
@@ -100,6 +102,7 @@ class MerchantDetailForm extends Component
             "data.xslt_code_efatura" => "nullable|string",
             "data.xslt_code" => "nullable|string",
             "data.add_order_date" => "required|boolean",
+            "data.auto_fulfillment_date" => "nullable|date",
             "data.status" => "nullable|string",
         ]);
 
