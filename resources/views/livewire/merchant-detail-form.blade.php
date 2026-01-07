@@ -505,6 +505,7 @@
                     </label>
                     <input
                         type="datetime-local"
+                        step="1"
                         id="auto_fulfillment_date"
                         wire:model.defer="data.auto_fulfillment_date"
                         class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
