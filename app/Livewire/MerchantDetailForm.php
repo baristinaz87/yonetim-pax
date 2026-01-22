@@ -31,7 +31,7 @@ class MerchantDetailForm extends Component
         $this->getData();
     }
 
-    private function getData(): void
+    public function getData(): void
     {
         $response = $this->eFaturaClient->getMerchant($this->merchantId);
         $setting = $response['data']['setting'] ?? [];
