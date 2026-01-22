@@ -37,6 +37,7 @@
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold">{{ $unvan }}</h1>
             <div class="flex items-center gap-2">
+                <button wire:click="getData()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Bilgileri Yenile</button>
                 <a href="https://partners.shopify.com/1779760/stores/{{ $shop_id }}" target="_blank" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-1">
                     Shopify Partners
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
