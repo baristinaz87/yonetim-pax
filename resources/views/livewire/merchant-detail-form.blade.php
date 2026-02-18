@@ -36,7 +36,7 @@
         <!-- Üst Başlık ve Butonlar -->
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold">{{ $unvan }}</h1>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0">
                 <button wire:click="getData()" wire:loading.attr="disabled" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 whitespace-nowrap">
                     <span wire:loading.remove wire:target="getData">Bilgileri Yenile</span>
                     <span wire:loading wire:target="getData">
