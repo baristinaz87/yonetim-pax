@@ -102,6 +102,7 @@ class MerchantDetailForm extends Component
             "data.xslt_code_efatura" => "nullable|string",
             "data.xslt_code" => "nullable|string",
             "data.add_order_date" => "required|boolean",
+            "data.add_order_note" => "required|boolean",
             "data.auto_fulfillment_date" => "nullable|date",
             "data.status" => "nullable|string",
         ]);

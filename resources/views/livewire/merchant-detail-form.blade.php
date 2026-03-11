@@ -500,6 +500,17 @@
                     </select>
                 </div>
 
+                <!-- Sipariş Notu Faturaya Ekleme -->
+                <div>
+                    <label for="add_order_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        Sipariş Notunun Faturaya Yazılması
+                    </label>
+                    <select id="add_order_note" wire:model.defer="data.add_order_note" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                        <option value="0">Hayır</option>
+                        <option value="1">Evet</option>
+                    </select>
+                </div>
+
                 <!-- Otomatik Fatura -->
                 <div>
                     <label for="auto_send" class="block text-sm font-medium text-gray-700 mb-1">
