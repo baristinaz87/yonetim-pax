@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EfaturaController;
 use App\Http\Controllers\Api\OurServiceController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,9 @@ use Illuminate\Support\Facades\Route;
 
 // Auth routes
 Route::post('/token', [AuthController::class, 'token']);
+
+// E-Fatura external integration (static token auth)
+Route::post('/efatura/creditBalanceZero', [EfaturaController::class, 'creditBalanceZero']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     // Auth routes that require authentication

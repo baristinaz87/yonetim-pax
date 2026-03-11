@@ -34,6 +34,18 @@ class EFaturaClient
         }
     }
 
+    public function getMerchantByDomain(string $domain): array
+    {
+        try {
+            $response = $this->client->get('/api/merchant/domain/'. $domain);
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
     public function addCredit($values): array
     {
         try {
