@@ -15,6 +15,8 @@ class WpMessageModal extends Component
     public array $templates = [
         "3" => "E-Fatura Kontör Bitiş Mesajı",
         "4" => "E-Fatura Yeni Müşteri Mesajı",
+        "5" => "E-Fatura Deaktivasyon Mesajı",
+        "6" => "E-Fatura Kontör Süresi Bitiş Mesajı",
     ];
 
     public function __construct()
