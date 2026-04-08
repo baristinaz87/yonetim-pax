@@ -279,7 +279,7 @@
         </form>
         <div class="flex justify-between mt-6">
             <div>
-                <span class="text-2xl font-bold underline">Kontör Hatırlatma Bildirimi</span>
+                <span class="text-2xl font-bold underline"></span>
             </div>
             <div class="flex gap-2">
                 <livewire:wp-message-modal :settings="$data" wire:key="wp-message-modal" />

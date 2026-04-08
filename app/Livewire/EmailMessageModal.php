@@ -34,7 +34,7 @@ class EmailMessageModal extends Component
 
     public function resetFormData(): void
     {
-        $this->formData["template"] = "expired";
+        $this->formData["template"] = 1;
         $this->formData["message"] = null;
     }
 
@@ -45,7 +45,7 @@ class EmailMessageModal extends Component
                 "formData.unvan"  => "required|string",
                 "formData.shop_myshopify_domain"  => "required|string",
                 "formData.emails"  => "required|string",
-                "formData.template"  => "required|string",
+                "formData.template"  => "required",
             ]);
         } catch (\Exception $error) {
             dd($error);

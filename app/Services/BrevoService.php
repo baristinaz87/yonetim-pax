@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\EmailContent;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
+/**
+ *
+ */
 class BrevoService
 {
     private Client $client;
@@ -50,7 +55,7 @@ class BrevoService
         }
     }
 
-    public function sendTemplateEmail(string $toName, array $emails, string $templateId): array
+    public function sendTemplateEmail(string $toName, array $emails, $templateId): array
     {
         $emailContent = EmailContent::find($templateId);
         if (!$emailContent instanceof EmailContent) {
