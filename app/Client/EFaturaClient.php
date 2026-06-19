@@ -152,4 +152,38 @@ class EFaturaClient
             dd($e->getMessage());
         }
     }
+
+    public function getMerchantOtherInvoices(
+        string $id,
+        int $page,
+        int $perPage,
+        ?string $source = null,
+        ?string $startDate = null,
+        ?string $endDate = null
+    ): array {
+        try {
+            $query = [
+                "page" => $page,
+                "per_page" => $perPage,
+                "sort" => "-execution_date",
+            ];
+
+            if (!empty($source)) {
+                $query["filter[source]"] = $source;
+            }
+            if (!empty($startDate)) {
+                $query["filter[execution_date_from]"] = $startDate;
+            }
+            if (!empty($endDate)) {
+                $query["filter[execution_date_to]"] = $endDate;
+            }
+
+            $response = $this->client->get('/api/merchant/'.$id.'/other-invoices?'.http_build_query($query));
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
 }
