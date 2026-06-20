@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Shopify webhook'ları CSRF doğrulaması gerektirmez.
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/shopify/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
