@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
- * delivery.paxdigital.net iç API istemcisi — App başına örneklenir.
+ * Harici iç API istemcisi — App başına örneklenir.
  *
- * Her Shopify uygulamasının kendine ait delivery API konfigürasyonu olabilir:
+ * Her Shopify uygulamasının kendine ait API konfigürasyonu olabilir:
  *   - api_auth_endpoint              → /api/login (bearer token almak için)
- *   - get_access_token_endpoint      → /api/get-password-by-shop (shop başına Shopify access token)
+ *   - get_access_token_endpoint      → /api/get-access-token (shop başına access token)
  *   - auth_email                     → login için kullanıcı adı
  *   - auth_password                  → login için parola
  *
@@ -45,7 +45,7 @@ class DeliveryApiClient
     {
         if (! $app->api_auth_endpoint || ! $app->get_access_token_endpoint) {
             throw new RuntimeException(
-                "App [{$app->handle}] için delivery API endpoint'leri tanımlı değil. "
+                "App [{$app->handle}] için API endpoint'leri tanımlı değil. "
                 .'Shopify → Uygulamalar sayfasından api_auth_endpoint ve get_access_token_endpoint alanlarını doldurun.'
             );
         }
@@ -87,7 +87,7 @@ class DeliveryApiClient
             ]);
         } catch (GuzzleException $e) {
             throw new RuntimeException(
-                "App [{$this->app->handle}] delivery login başarısız: ".$e->getMessage(),
+                "App [{$this->app->handle}] API login başarısız: ".$e->getMessage(),
                 0,
                 $e,
             );
@@ -170,13 +170,13 @@ class DeliveryApiClient
             }
 
             throw new RuntimeException(
-                "delivery get-token başarısız ({$status}) [app={$this->app->handle}]: ".$e->getMessage(),
+                "API get-token başarısız ({$status}) [app={$this->app->handle}]: ".$e->getMessage(),
                 0,
                 $e,
             );
         } catch (GuzzleException $e) {
             throw new RuntimeException(
-                "delivery get-token başarısız [app={$this->app->handle}]: ".$e->getMessage(),
+                "API get-token başarısız [app={$this->app->handle}]: ".$e->getMessage(),
                 0,
                 $e,
             );

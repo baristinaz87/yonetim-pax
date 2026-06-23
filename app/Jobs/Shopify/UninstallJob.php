@@ -17,12 +17,8 @@ use Illuminate\Support\Facades\Log;
  * Shopify "app uninstalled" event'i için arka plan işi.
  *
  * Akış:
- *   1. App'in webhook_url'sine POST at (fire-and-forget)
- *   2. StoreApp.status = 'uninstalled', uninstalled_at set
- *   3. Access token bellekten silinsin diye null yapılır
- *
- * Bu job InstallJob'un simetriği — gelecekte buraya da dış entegrasyonlar
- * (clean-up, audit, vs.) eklenebilir.
+ *   - StoreApp.status = 'uninstalled', uninstalled_at set edilir
+ *   - Access token bellekten silinsin diye null yapılır
  */
 class UninstallJob implements ShouldQueue
 {
@@ -55,10 +51,6 @@ class UninstallJob implements ShouldQueue
 
         Log::info("[uninstall-job] başladı: app={$app->handle}, store={$domain}, event_id={$event->id}");
 
-        // 1) Dış sisteme uninstall bildirimi
-        $this->notifyExternalSystem($app, $event);
-
-        // 2) StoreApp durumunu güncelle, token'ı temizle
         $updated = StoreApp::query()
             ->where('store_id', $event->store->id)
             ->where('app_id', $app->id)
@@ -69,38 +61,6 @@ class UninstallJob implements ShouldQueue
             ]);
 
         Log::info("[uninstall-job] tamamlandı: store={$domain}, app={$app->handle}, affected_rows={$updated}");
-    }
-
-    private function notifyExternalSystem(\App\Models\Shopify\App $app, Event $event): void
-    {
-        if (! $app->webhook_url) {
-            return;
-        }
-
-        try {
-            $client = new \GuzzleHttp\Client([
-                'timeout' => 10,
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'Accept'       => 'application/json',
-                ],
-            ]);
-
-            $client->post($app->webhook_url, [
-                'json' => [
-                    'event'       => 'app_uninstalled',
-                    'app_handle'  => $app->handle,
-                    'app_name'    => $app->name,
-                    'shop'        => $event->store?->domain,
-                    'occurred_at' => $event->created_at?->toIso8601String(),
-                    'event_id'    => $event->id,
-                ],
-            ]);
-
-            Log::info("[uninstall-job] {$app->handle} webhook_url POST: {$app->webhook_url}");
-        } catch (\Throwable $e) {
-            Log::warning("[uninstall-job] {$app->handle} webhook_url başarısız: ".$e->getMessage());
-        }
     }
 
     public function failed(\Throwable $exception): void

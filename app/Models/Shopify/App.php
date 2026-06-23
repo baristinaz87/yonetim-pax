@@ -23,7 +23,6 @@ class App extends Model
         'client_id',
         'client_secret',
         'logo',
-        'webhook_url',
         'api_auth_endpoint',
         'get_access_token_endpoint',
         'auth_email',

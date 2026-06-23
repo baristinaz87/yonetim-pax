@@ -9,22 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('shopify_apps', function (Blueprint $table) {
-            // Bu uygulamaya install/uninstall olayları için POST atılacak adres.
-            // Örn: https://delivery.paxdigital.net/webhooks/shopify/yurtici-kargo
-            $table->string('webhook_url')
-                ->nullable()
-                ->after('logo');
-
-            // delivery.paxdigital.net API konfigürasyonu — app başına saklanır
+            // Harici API konfigürasyonu — app başına saklanır
             // (çoğu kurulumda hepsi aynı olsa da, gerektiğinde override edebilmek için).
             //
-            // Auth (login) endpoint: bearer token almak için kullanılır.
-            //   Örn: https://delivery.paxdigital.net/api/login
-            // Get-access-token endpoint: shop başına Shopify access token çekmek için.
-            //   Örn: https://delivery.paxdigital.net/api/get-password-by-shop
+            // api_auth_endpoint        → /api/login (bearer token almak için)
+            // get_access_token_endpoint → /api/get-password-by-shop (shop başına access token)
+            // auth_email               → login için kullanıcı adı
+            // auth_password            → login için parola
             $table->string('api_auth_endpoint')
                 ->nullable()
-                ->after('webhook_url');
+                ->after('logo');
 
             $table->string('get_access_token_endpoint')
                 ->nullable()
@@ -38,7 +32,7 @@ return new class extends Migration
                 ->nullable()
                 ->after('auth_email');
 
-            // NOT: HTTP timeout sütun olarak eklenmedi — sabit 20 saniye (DeliveryApiClient::DEFAULT_TIMEOUT).
+            // NOT: HTTP timeout sütun olarak eklenmedi — sabit 20 saniye.
         });
     }
 
@@ -46,7 +40,6 @@ return new class extends Migration
     {
         Schema::table('shopify_apps', function (Blueprint $table) {
             $table->dropColumn([
-                'webhook_url',
                 'api_auth_endpoint',
                 'get_access_token_endpoint',
                 'auth_email',
