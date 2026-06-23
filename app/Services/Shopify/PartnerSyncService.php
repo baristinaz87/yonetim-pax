@@ -6,6 +6,7 @@ namespace App\Services\Shopify;
 
 use App\Models\Shopify\App;
 use App\Models\Shopify\Event;
+use App\Models\Shopify\PartnerAccount;
 use App\Models\Shopify\Store;
 use App\Models\Shopify\StoreApp;
 use Carbon\Carbon;
@@ -16,8 +17,10 @@ use Illuminate\Support\Facades\Log;
  * Partner API'den app install/uninstall event'lerini çekip
  * Store / StoreApp / Event tablolarına işler.
  *
- * Orijinal Node.js referansı:
- *   server/src/services/partnerSync.js
+ * Birden fazla Partner hesabını destekler:
+ *   - Her App, kendi PartnerAccount'una bağlıdır (shopify_apps.partner_account_id).
+ *   - Sync sırasında hesap başına ayrı bir PartnerClient örneği oluşturulur
+ *     (rate limit her hesaba ayrı uygulanır).
  */
 class PartnerSyncService
 {
@@ -45,39 +48,75 @@ class PartnerSyncService
     GRAPHQL;
 
     public function __construct(
-        private readonly PartnerClient $partner,
-        private readonly AdminClient   $admin,
+        private readonly AdminClient $admin,
     ) {}
 
     /**
-     * Tüm aktif uygulamaları senkronize et.
+     * Tüm aktif uygulamaları, ait oldukları partner hesapları üzerinden senkronize et.
+     *
+     * Partner hesabı atanmamış uygulamalar loglanır ve atlanır.
+     * Her partner hesabı için ayrı bir PartnerClient örneği kullanılır.
      */
-    public function syncAllApps(): void
+    public function syncAllApps(): int
     {
         $apps = App::query()
             ->active()
             ->withGid()
+            ->with('partnerAccount')
             ->get();
 
-        foreach ($apps as $app) {
-            $this->syncApp($app);
+        // Partner hesabı atanmamış uygulamaları ayır
+        $appsWithoutAccount = $apps->filter(fn (App $app) => ! $app->partnerAccount);
+        if ($appsWithoutAccount->isNotEmpty()) {
+            Log::warning('[sync] partner hesabı atanmamış uygulamalar atlandı: '
+                .$appsWithoutAccount->pluck('handle')->implode(', '));
         }
+
+        $grouped = $apps
+            ->filter(fn (App $app) => $app->partnerAccount && $app->partnerAccount->active)
+            ->groupBy('partner_account_id');
+
+        $total = 0;
+        foreach ($grouped as $partnerAccountId => $appsForAccount) {
+            /** @var PartnerAccount $account */
+            $account = $appsForAccount->first()->partnerAccount;
+            $client  = new PartnerClient($account);
+
+            Log::info("[sync] partner={$account->name} (org_id={$account->org_id}) üzerinden "
+                .$appsForAccount->count().' uygulama senkronize ediliyor');
+
+            foreach ($appsForAccount as $app) {
+                $total += $this->syncApp($app, $client);
+            }
+        }
+
+        return $total;
     }
 
     /**
      * Tek bir uygulamayı incremental olarak senkronize et.
+     *
+     * $client opsiyonel: birden çok app'i aynı partner hesabından çekiyorsan
+     * dışarıdan ver, yoksa App'in partner hesabından yeni bir istemci oluşturulur.
      */
-    public function syncApp(App $app): int
+    public function syncApp(App $app, ?PartnerClient $client = null): int
     {
         if (! $app->shopify_app_gid) {
             Log::info("[sync] {$app->name}: shopify_app_gid yok, atlandı");
             return 0;
         }
 
-        $occurredAtMin = $app->last_synced_at?->toIso8601String();
-        Log::info("[sync] {$app->name} senkronize ediliyor...");
+        if (! $app->partnerAccount) {
+            Log::warning("[sync] {$app->name}: partner hesabı atanmamış, atlandı");
+            return 0;
+        }
 
-        $events    = $this->fetchAllEvents($app->shopify_app_gid, $occurredAtMin);
+        $client ??= new PartnerClient($app->partnerAccount);
+
+        $occurredAtMin = $app->last_synced_at?->toIso8601String();
+        Log::info("[sync] {$app->name} (partner: {$app->partnerAccount->name}) senkronize ediliyor...");
+
+        $events    = $this->fetchAllEvents($client, $app->shopify_app_gid, $occurredAtMin);
         $processed = 0;
         $latest    = $app->last_synced_at;
 
@@ -120,14 +159,14 @@ class PartnerSyncService
      *
      * @return array<int, array<string, mixed>>
      */
-    private function fetchAllEvents(string $appGid, ?string $occurredAtMin): array
+    private function fetchAllEvents(PartnerClient $client, string $appGid, ?string $occurredAtMin): array
     {
         $types = ['RELATIONSHIP_INSTALLED', 'RELATIONSHIP_UNINSTALLED'];
         $all   = [];
         $after = null;
 
         do {
-            $data = $this->partner->query(self::EVENTS_QUERY, [
+            $data = $client->query(self::EVENTS_QUERY, [
                 'appId'         => $appGid,
                 'types'         => $types,
                 'after'         => $after,

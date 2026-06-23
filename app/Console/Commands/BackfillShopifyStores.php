@@ -6,7 +6,6 @@ namespace App\Console\Commands;
 
 use App\Models\Shopify\StoreApp;
 use App\Services\Shopify\AdminClient;
-use App\Services\Shopify\PartnerClient;
 use App\Services\Shopify\PartnerSyncService;
 use Illuminate\Console\Command;
 use Throwable;
@@ -29,7 +28,7 @@ class BackfillShopifyStores extends Command
 
     protected $description = 'Mevcut Shopify mağazalarını Partner/Admin API ile zenginleştirir.';
 
-    public function handle(PartnerClient $partner, AdminClient $admin, PartnerSyncService $sync): int
+    public function handle(PartnerSyncService $sync, AdminClient $admin): int
     {
         try {
             $mode = $this->option('only');

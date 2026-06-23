@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Shopify;
 
+use App\Models\Shopify\PartnerAccount;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -14,11 +15,14 @@ use RuntimeException;
  * Shopify Partner API GraphQL istemcisi.
  *
  * URL şablonu:
- *   https://partners.shopify.com/{ORG_ID}/api/2026-04/graphql.json
+ *   https://partners.shopify.com/{ORG_ID}/api/{API_VERSION}/graphql.json
  *
  * Auth: X-Shopify-Access-Token header'ı.
  *
- * Rate limit: 4 istek/saniye (Partner API client başına).
+ * Her partner hesabı için ayrı bir istemci örneği oluşturulmalıdır —
+ * rate limit (4 req/sec) hesap başına uygulanır.
+ *
+ * Rate limit davranışı:
  * - İstekler arası 250 ms minimum bekleme
  * - 429 yanıtında exponential backoff (1s, 2s, 4s, 8s, 16s) + jitter
  * - 5 deneme sonrası exception fırlatır
@@ -35,15 +39,47 @@ class PartnerClient
     private string $orgId;
     private string $token;
     private string $apiVersion;
-
-    /** Son isteğin mikro-saniye zaman damgası */
     private ?int $lastRequestAt = null;
 
-    public function __construct(?string $orgId = null, ?string $token = null, string $apiVersion = '2026-04')
-    {
-        $this->orgId      = $orgId ?? (string) config('services.shopify.partner.org_id');
-        $this->token      = $token ?? (string) config('services.shopify.partner.token');
-        $this->apiVersion = $apiVersion;
+    /**
+     * PartnerClient oluştur.
+     *
+     * Öncelik sırası:
+     *   1. Geçirilen PartnerAccount (önerilen)
+     *   2. Geçirilen ham değerler (test/iç kullanım)
+     *   3. Veritabanındaki ilk aktif partner hesabı (geriye uyumluluk)
+     *   4. .env fallback (geçiş dönemi)
+     */
+    public function __construct(
+        ?PartnerAccount $account = null,
+        ?string $orgId = null,
+        ?string $token = null,
+        ?string $apiVersion = null,
+    ) {
+        if ($account) {
+            $this->orgId      = $account->org_id;
+            $this->token      = $account->access_token;
+            $this->apiVersion = $account->api_version ?: '2026-04';
+        } else {
+            $fallback = $this->resolveFallbackAccount();
+
+            if ($fallback) {
+                $this->orgId      = $fallback->org_id;
+                $this->token      = $fallback->access_token;
+                $this->apiVersion = $fallback->api_version ?: '2026-04';
+            } else {
+                $this->orgId      = (string) ($orgId ?? config('services.shopify.partner.org_id'));
+                $this->token      = (string) ($token ?? config('services.shopify.partner.token'));
+                $this->apiVersion = (string) ($apiVersion ?? config('services.shopify.partner.api_version', '2026-04'));
+            }
+        }
+
+        if ($this->orgId === '' || $this->token === '') {
+            throw new RuntimeException(
+                'Shopify PartnerClient için org_id ve access_token gerekli. '
+                .'Lütfen shopify_partner_accounts tablosuna bir kayıt ekleyin veya .env üzerinden geçici olarak tanımlayın.'
+            );
+        }
 
         $baseUrl = "https://partners.shopify.com/{$this->orgId}/api/{$this->apiVersion}/graphql.json";
 
@@ -57,6 +93,20 @@ class PartnerClient
             'timeout'         => 30,
             'connect_timeout' => 10,
         ]);
+    }
+
+    /**
+     * Geriye uyumluluk: parametre gelmemişse veritabanındaki ilk aktif partner hesabını dön.
+     * Bu, eski tek-partner kurulumlarında komutların çalışmaya devam etmesini sağlar.
+     */
+    private function resolveFallbackAccount(): ?PartnerAccount
+    {
+        try {
+            return PartnerAccount::query()->active()->orderBy('id')->first();
+        } catch (\Throwable) {
+            // Tablo henüz migrate edilmediyse sessizce geç — eski davranışa düş.
+            return null;
+        }
     }
 
     /**

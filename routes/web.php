@@ -34,6 +34,20 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
+// Shopify yönetimi — partner hesapları ve uygulamalar
+Route::prefix('shopify')
+    ->middleware(['auth', 'verified'])
+    ->name('shopify.')
+    ->group(function () {
+        Route::view('partner-accounts', 'shopify-partner-accounts')->name('partner-accounts');
+        Route::view('partner-accounts/create', 'shopify-partner-account-form')->name('partner-accounts.create');
+        Route::view('partner-accounts/{accountId}/edit', 'shopify-partner-account-form')->name('partner-accounts.edit');
+
+        Route::view('apps', 'shopify-apps')->name('apps');
+        Route::view('apps/create', 'shopify-app-form')->name('apps.create');
+        Route::view('apps/{appId}/edit', 'shopify-app-form')->name('apps.edit');
+    });
+
 // Google OAuth callback
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->middleware(['auth'])
