@@ -11,6 +11,7 @@
             <livewire:merchant-notes-table :id="request('id')" />
             <livewire:merchant-other-invoices-table :id="request('id')" />
             <livewire:notification-log-table :id="request('id')" />
+            <livewire:shopify-events-table :id="request('id')" />
         </div>
     </div>
 </x-app-layout>
