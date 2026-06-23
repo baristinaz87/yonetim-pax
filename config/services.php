@@ -46,6 +46,12 @@ return [
         ],
     ],
 
+    // delivery.paxdigital.net API konfigürasyonu artık shopify_apps tablosunda
+    // her uygulama başına ayrı sütunlarda saklanıyor:
+    //   api_auth_endpoint, get_access_token_endpoint, auth_email, auth_password.
+    // HTTP timeout sabit 20 saniyedir (DeliveryApiClient::DEFAULT_TIMEOUT).
+    // UI'dan yönetilir; buradan kaldırıldı.
+
     'shopify' => [
         'partner' => [
             'org_id'      => env('SHOPIFY_PARTNER_ORG_ID'),

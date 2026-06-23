@@ -23,15 +23,21 @@ class App extends Model
         'client_id',
         'client_secret',
         'logo',
+        'webhook_url',
+        'api_auth_endpoint',
+        'get_access_token_endpoint',
+        'auth_email',
+        'auth_password',
         'active',
         'last_synced_at',
     ];
 
     /**
-     * Gizli alanlar: uygulama OAuth client_secret.
+     * Gizli alanlar: OAuth client_secret + delivery API auth_password.
      */
     protected $hidden = [
         'client_secret',
+        'auth_password',
     ];
 
     protected $casts = [

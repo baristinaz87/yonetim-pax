@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Shopify;
 
 use App\Models\Shopify\PartnerAccount;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -24,14 +25,25 @@ class ShopifyPartnerAccountForm extends Component
     public bool $active = true;
     public string $notes = '';
 
-    protected $rules = [
-        'name'         => 'required|string|max:255|unique:shopify_partner_accounts,name',
-        'org_id'       => 'required|string|max:255',
-        'access_token' => 'required|string',
-        'api_version'  => 'required|string|max:20',
-        'active'       => 'boolean',
-        'notes'        => 'nullable|string|max:2000',
-    ];
+    protected function rules(): array
+    {
+        $accountId = $this->account?->id;
+
+        return [
+            'name'         => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('shopify_partner_accounts', 'name')->ignore($accountId),
+            ],
+            'org_id'       => 'required|string|max:255',
+            // Düzenleme sırasında token opsiyonel — boş bırakılırsa mevcut korunur
+            'access_token' => [$this->isEditing ? 'nullable' : 'required', 'string'],
+            'api_version'  => 'required|string|max:20',
+            'active'       => 'boolean',
+            'notes'        => 'nullable|string|max:2000',
+        ];
+    }
 
     public function mount(?int $accountId = null): void
     {
@@ -45,12 +57,6 @@ class ShopifyPartnerAccountForm extends Component
             $this->api_version  = $this->account->api_version ?: '2026-04';
             $this->active       = $this->account->active;
             $this->notes        = $this->account->notes ?? '';
-
-            // Düzenleme sırasında unique kuralını mevcut kayıt hariç tut
-            $this->rules['name'] = 'required|string|max:255|unique:shopify_partner_accounts,name,'
-                .$this->account->id;
-            // Token alanı opsiyonel olur — kullanıcı boş bırakırsa mevcut token korunur
-            $this->rules['access_token'] = 'nullable|string';
         }
     }
 

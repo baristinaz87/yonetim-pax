@@ -6,6 +6,7 @@ namespace App\Livewire\Shopify;
 
 use App\Models\Shopify\App;
 use App\Models\Shopify\PartnerAccount;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -25,18 +26,50 @@ class ShopifyAppForm extends Component
     public string $client_id = '';
     public string $client_secret = '';
     public string $logo = '';
+    public string $webhook_url = '';
+    public string $api_auth_endpoint = '';
+    public string $get_access_token_endpoint = '';
+    public string $auth_email = '';
+    public string $auth_password = '';
     public bool $active = true;
 
-    protected $rules = [
-        'partner_account_id' => 'required|integer|exists:shopify_partner_accounts,id',
-        'name'               => 'required|string|max:255',
-        'handle'             => 'required|string|max:255|alpha_dash|unique:shopify_apps,handle',
-        'shopify_app_gid'    => 'nullable|string|max:255|unique:shopify_apps,shopify_app_gid',
-        'client_id'          => 'required|string|max:255',
-        'client_secret'      => 'required|string',
-        'logo'               => 'nullable|string|max:255',
-        'active'             => 'boolean',
-    ];
+    /**
+     * Dinamik kurallar: mount() içinde $this->app set edildikten sonra
+     * ignore değerini doğru hesaplayabiliriz.
+     */
+    protected function rules(): array
+    {
+        $appId = $this->app?->id;
+
+        return [
+            'partner_account_id' => 'required|integer|exists:shopify_partner_accounts,id',
+            'name'               => 'required|string|max:255',
+            'handle'             => [
+                'required',
+                'string',
+                'max:255',
+                'alpha_dash',
+                Rule::unique('shopify_apps', 'handle')->ignore($appId),
+            ],
+            'shopify_app_gid'    => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('shopify_apps', 'shopify_app_gid')->ignore($appId),
+            ],
+            'client_id'          => 'required|string|max:255',
+            // Düzenleme sırasında secret opsiyonel — boş bırakılırsa mevcut korunur
+            'client_secret'      => [$this->isEditing ? 'nullable' : 'required', 'string'],
+            'logo'               => 'nullable|string|max:255',
+            'webhook_url'        => 'nullable|url|max:500',
+            'api_auth_endpoint'  => 'nullable|url|max:500',
+            'get_access_token_endpoint' => 'nullable|url|max:500',
+            'auth_email'         => 'nullable|email|max:255',
+            // Düzenleme sırasında password opsiyonel — boş bırakılırsa mevcut korunur
+            'auth_password'      => [$this->isEditing ? 'nullable' : 'required', 'string', 'max:1000'],
+            'active'             => 'boolean',
+        ];
+    }
 
     public function mount(?int $appId = null): void
     {
@@ -51,15 +84,12 @@ class ShopifyAppForm extends Component
             $this->client_id          = $this->app->client_id;
             $this->client_secret      = $this->app->client_secret;
             $this->logo               = $this->app->logo ?? '';
+            $this->webhook_url        = $this->app->webhook_url ?? '';
+            $this->api_auth_endpoint  = $this->app->api_auth_endpoint ?? '';
+            $this->get_access_token_endpoint = $this->app->get_access_token_endpoint ?? '';
+            $this->auth_email         = $this->app->auth_email ?? '';
+            $this->auth_password      = $this->app->auth_password ?? '';
             $this->active             = $this->app->active;
-
-            // Unique kurallarını mevcut kayıt hariç tut
-            $this->rules['handle']          = 'required|string|max:255|alpha_dash|unique:shopify_apps,handle,'
-                .$this->app->id;
-            $this->rules['shopify_app_gid'] = 'nullable|string|max:255|unique:shopify_apps,shopify_app_gid,'
-                .$this->app->id;
-            // Düzenleme sırasında secret opsiyonel — boş bırakılırsa mevcut korunur
-            $this->rules['client_secret']   = 'nullable|string';
         }
     }
 
@@ -72,19 +102,28 @@ class ShopifyAppForm extends Component
             'name'               => $this->name,
             'handle'             => $this->handle,
             'shopify_app_gid'    => $this->shopify_app_gid ?: null,
-            'client_id'          => $this->client_id,
-            'logo'               => $this->logo ?: null,
-            'active'             => $this->active,
+            'client_id'             => $this->client_id,
+            'logo'                  => $this->logo ?: null,
+            'webhook_url'           => $this->webhook_url ?: null,
+            'api_auth_endpoint'     => $this->api_auth_endpoint ?: null,
+            'get_access_token_endpoint' => $this->get_access_token_endpoint ?: null,
+            'auth_email'            => $this->auth_email ?: null,
+            'active'                => $this->active,
         ];
 
         if ($this->isEditing) {
+            // Token alanları boş bırakıldıysa mevcut değerleri koru
             if ($this->client_secret !== '') {
                 $data['client_secret'] = $this->client_secret;
+            }
+            if ($this->auth_password !== '') {
+                $data['auth_password'] = $this->auth_password;
             }
             $this->app->update($data);
             session()->flash('message', 'Uygulama güncellendi.');
         } else {
             $data['client_secret'] = $this->client_secret;
+            $data['auth_password'] = $this->auth_password ?: null;
             App::create($data);
             session()->flash('message', 'Uygulama oluşturuldu.');
         }

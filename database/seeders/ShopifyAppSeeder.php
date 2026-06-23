@@ -95,6 +95,10 @@ class ShopifyAppSeeder extends Seeder
             // partner_account_key → org_id eşleştirmesi
             $partner = $this->resolvePartner($key, $defaultPartner);
 
+            // partner_account_key gerçek bir kolon değil, sadece eşleştirme için kullanılıyor —
+            // veritabanına yazılmadan önce $data'dan çıkar.
+            unset($data['partner_account_key']);
+
             App::updateOrCreate(
                 ['handle' => $handle],
                 array_merge($data, [

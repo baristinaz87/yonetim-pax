@@ -82,6 +82,64 @@
             @error('logo') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
 
+        <div>
+            <label for="webhook_url" class="block text-sm font-medium text-gray-700 mb-1">
+                Webhook URL <span class="text-gray-400 text-xs">(install/uninstall POST bildirimi için)</span>
+            </label>
+            <input wire:model="webhook_url" type="url" id="webhook_url" class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://delivery.paxdigital.net/webhooks/shopify/...">
+            @error('webhook_url') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            <p class="mt-1 text-xs text-gray-500">
+                Boş bırakırsanız dış sisteme bildirim gönderilmez. Bu uygulama için install/uninstall olayları yine de işlenir, sadece HTTP POST atlanır.
+            </p>
+        </div>
+
+        {{-- delivery.paxdigital.net API konfigürasyonu --}}
+        <fieldset class="border border-gray-200 rounded-lg p-4 space-y-4">
+            <legend class="text-sm font-semibold text-gray-700 px-2">delivery.paxdigital.net API</legend>
+            <p class="text-xs text-gray-500 -mt-2">
+                Shop başına Shopify access token almak için kullanılır. Önce auth endpoint'inden bearer token alınır,
+                sonra get-access-token endpoint'ine <code class="font-mono">?shop=...</code> parametresi ile istek atılır.
+                HTTP timeout sabit <strong>20 saniye</strong>'dir.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="api_auth_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
+                        API Auth Endpoint
+                    </label>
+                    <input wire:model="api_auth_endpoint" type="url" id="api_auth_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://delivery.paxdigital.net/api/login">
+                    @error('api_auth_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-gray-500">Bearer token alınacak tam URL (login endpoint).</p>
+                </div>
+
+                <div>
+                    <label for="get_access_token_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
+                        Get Access Token Endpoint
+                    </label>
+                    <input wire:model="get_access_token_endpoint" type="url" id="get_access_token_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://delivery.paxdigital.net/api/get-password-by-shop">
+                    @error('get_access_token_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-gray-500">Shop başına token döndüren tam URL.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="auth_email" class="block text-sm font-medium text-gray-700 mb-1">Auth Email</label>
+                    <input wire:model="auth_email" type="email" id="auth_email" class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="ops@paxdigital.net">
+                    @error('auth_email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label for="auth_password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Auth Password
+                        @if($isEditing)<span class="text-gray-400 text-xs">(boş bırakırsanız mevcut korunur)</span>@endif
+                    </label>
+                    <input wire:model="auth_password" type="password" id="auth_password" class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="{{ $isEditing ? '•••••••• (değiştirmek için yazın)' : '••••••••' }}" autocomplete="off">
+                    @error('auth_password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </fieldset>
+
         <div class="flex items-center justify-between pt-4 border-t border-gray-200">
             <a href="{{ route('shopify.apps') }}" class="text-gray-600 hover:text-gray-900">← Geri</a>
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded inline-flex items-center gap-2">
