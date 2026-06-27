@@ -65,7 +65,16 @@
                 @forelse($apps as $app)
                     <tr class="bg-white border-b hover:bg-gray-50">
                         <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                            {{ $app->name }}
+                            <div class="flex items-center gap-3">
+                                @if($app->logo)
+                                    <img src="{{ $app->logo }}" alt="{{ $app->name }}" class="w-9 h-9 rounded-lg object-contain bg-gray-50 border border-gray-200 shrink-0" loading="lazy">
+                                @else
+                                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                                        {{ mb_strtoupper(mb_substr($app->name, 0, 1)) }}
+                                    </div>
+                                @endif
+                                <span>{{ $app->name }}</span>
+                            </div>
                         </th>
                         <td class="px-6 py-4 font-mono text-xs">{{ $app->handle }}</td>
                         <td class="px-6 py-4">

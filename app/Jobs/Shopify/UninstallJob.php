@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Shopify "app uninstalled" event'i için arka plan işi.
@@ -63,7 +64,7 @@ class UninstallJob implements ShouldQueue
         Log::info("[uninstall-job] tamamlandı: store={$domain}, app={$app->handle}, affected_rows={$updated}");
     }
 
-    public function failed(\Throwable $exception): void
+    public function failed(Throwable $exception): void
     {
         Log::error("[uninstall-job] tüm denemeler başarısız: event_id={$this->eventId}, hata: ".$exception->getMessage());
     }
