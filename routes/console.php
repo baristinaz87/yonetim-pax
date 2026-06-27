@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('shopify:sync')
-    ->everyFiveMinutes()
+    ->everyMinute()
     ->withoutOverlapping(10)
     ->runInBackground()
     ->onOneServer()
