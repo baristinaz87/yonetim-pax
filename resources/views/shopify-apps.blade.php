@@ -11,6 +11,13 @@
                     <livewire:shopify.shopify-apps-table />
                 </div>
             </div>
+
+            {{-- Events Feed — Tüm uygulamaların install/uninstall kayıtları --}}
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
+                <div class="p-6 text-gray-900">
+                    <livewire:shopify-events-feed />
+                </div>
+            </div>
         </div>
     </div>
 </x-app-layout>

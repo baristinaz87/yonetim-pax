@@ -75,6 +75,9 @@ new class extends Component
                             <x-dropdown-link :href="route('shopify.apps')" wire:navigate>
                                 {{ __('Uygulamalar') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('shopify.stores.index')" wire:navigate>
+                                {{ __('Mağazalar') }}
+                            </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
                 </div>
@@ -136,6 +139,9 @@ new class extends Component
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('shopify.apps')" :active="request()->routeIs('shopify.apps*')" wire:navigate>
                 {{ __('Shopify Uygulamaları') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('shopify.stores.index')" :active="request()->routeIs('shopify.stores*')" wire:navigate>
+                {{ __('Shopify Mağazaları') }}
             </x-responsive-nav-link>
         </div>
 

@@ -45,7 +45,11 @@ Route::prefix('shopify')
 
         Route::view('apps', 'shopify-apps')->name('apps');
         Route::view('apps/create', 'shopify-app-form')->name('apps.create');
+        Route::view('apps/{appId}', 'shopify-app-detail')->name('apps.show');
         Route::view('apps/{appId}/edit', 'shopify-app-form')->name('apps.edit');
+
+        Route::view('stores', 'shopify-stores')->name('stores.index');
+        Route::view('stores/{storeId}', 'shopify-store-detail')->name('stores.show');
     });
 
 // Google OAuth callback
