@@ -3,14 +3,8 @@
 <div class="space-y-6">
     {{-- Başlık + Mağaza Bilgileri --}}
     <div class="bg-white shadow-sm sm:rounded-lg p-6 border border-gray-200">
-        <div class="flex flex-wrap items-start gap-4">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center shrink-0">
-                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd"/>
-                </svg>
-            </div>
-
-            <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
                 <h2 class="text-2xl font-bold text-gray-900 font-mono">{{ $store->domain }}</h2>
                 <p class="text-sm text-gray-600 mt-1">
                     {{ $store->name ?? '—' }}
