@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Shopify;
 
 use App\Models\Shopify\App;
+use App\Models\Shopify\Event;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -48,6 +49,15 @@ class ShopifyAppDetail extends Component
     {
         $stores = $this->app->stores()
             ->with('store:id,domain,name,email')
+            ->addSelect([
+                'latest_event_at' => Event::select('created_at')
+                    ->whereColumn('store_id', 'shopify_store_apps.store_id')
+                    ->whereColumn('app_id', 'shopify_store_apps.app_id')
+                    ->orderByDesc('created_at')
+                    ->limit(1),
+            ])
+            // En son event alan mağaza üstte; event yoksa kurulum tarihine göre
+            ->orderByRaw('latest_event_at IS NULL, latest_event_at DESC')
             ->orderByDesc('installed_at')
             ->get();
 
