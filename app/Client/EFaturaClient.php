@@ -153,6 +153,75 @@ class EFaturaClient
         }
     }
 
+    /**
+     * VKN'ye (tax_number) göre gruplanmış, sadece birden fazla mağazaya
+     * sahip kullanıcıları döner. Her grup, o VKN'ye bağlı tüm mağazaların
+     * listesini ve toplam mağaza sayısını içerir.
+     *
+     * @return array{
+     *     multi_store_count: int,
+     *     groups: array<int, array{
+     *         vkn: string,
+     *         count: int,
+     *         merchants: array<int, array{merchant_id: int, domain: string, unvan: string}>
+     *     }>
+     * }
+     */
+    public function getMultiStoreGroups(): array
+    {
+        try {
+            // Sayfa başına tüm kayıtları çek
+            $response = $this->client->get('/api/merchants?' . http_build_query([
+                "page"     => 1,
+                "per_page" => 100000,
+                "include"  => "setting",
+            ]));
+            $content = $response->getBody()->getContents();
+            $payload = json_decode($content, true);
+            $merchants = $payload["data"] ?? [];
+
+            $groups = [];
+            foreach ($merchants as $item) {
+                $vkn = isset($item["setting"]["tax_number"])
+                    ? trim((string) $item["setting"]["tax_number"])
+                    : "";
+                if ($vkn === "") {
+                    continue;
+                }
+                if (!isset($groups[$vkn])) {
+                    $groups[$vkn] = [
+                        "vkn"       => $vkn,
+                        "count"     => 0,
+                        "merchants" => [],
+                    ];
+                }
+                $groups[$vkn]["count"]++;
+                $groups[$vkn]["merchants"][] = [
+                    "merchant_id" => $item["id"] ?? null,
+                    "domain"      => trim((string) ($item["setting"]["shop_domain"] ?? "")),
+                    "unvan"       => trim((string) ($item["setting"]["unvan"] ?? "")),
+                ];
+            }
+
+            // Sadece 1'den fazla mağazası olan gruplar
+            $multi = array_values(array_filter(
+                $groups,
+                fn($g) => $g["count"] > 1
+            ));
+
+            // En çok mağaza en üstte
+            usort($multi, fn($a, $b) => $b["count"] <=> $a["count"]);
+
+            return [
+                "multi_store_count" => count($multi),
+                "groups"            => $multi,
+            ];
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
+
     public function getMerchantOtherInvoices(
         string $id,
         int $page,

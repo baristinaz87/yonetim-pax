@@ -31,13 +31,43 @@
         return $tmp;
     }, $data);
 
-    $isFilterButtonHide = empty($selectedStatus) && empty($unvanSearch) && empty($shopDomainSearch) && empty($sortField);
+    // Group merchants by trimmed VKN (tax_number) so we can show how many
+    // stores share the same tax id and list every related store on click.
+    $taxNumberGroups = [];
+    foreach ($merchants as $m) {
+        $vkn = isset($m["tax_number"]) ? trim((string) $m["tax_number"]) : "";
+        if ($vkn === "") {
+            continue;
+        }
+        if (!isset($taxNumberGroups[$vkn])) {
+            $taxNumberGroups[$vkn] = [
+                "count"    => 0,
+                "merchants" => [],
+            ];
+        }
+        $taxNumberGroups[$vkn]["count"]++;
+        $taxNumberGroups[$vkn]["merchants"][] = [
+            "merchant_id" => $m["merchant_id"] ?? null,
+            "domain"      => trim((string) ($m["shop_domain"] ?? "")),
+            "unvan"       => trim((string) ($m["unvan"] ?? "")),
+        ];
+    }
+
+    $isFilterButtonHide = empty($selectedStatus) && empty($unvanSearch) && empty($shopDomainSearch) && empty($sortField) && !$multiStoreOnly;
 @endphp
 <div class="overflow-x-auto bg-white rounded-lg shadow-sm pb-6">
     @if(!$isFilterButtonHide)
         <button wire:click="resetFilters()" class="bg-blue-500 text-white px-2 py-3 mb-4 rounded hover:bg-blue-600">
             Filtreleri Sıfırla
         </button>
+    @endif
+    @if($multiStoreOnly)
+        <div class="mb-3 text-sm text-gray-600">
+            <span class="inline-flex items-center px-2 py-1 rounded bg-blue-50 text-blue-700 font-medium">
+                Çoklu Mağaza filtresi aktif
+            </span>
+            <span class="ml-2">Aynı VKN'ye sahip birden fazla mağazası olan kayıtlar, mağaza sayısına göre azalan sırada listelenir.</span>
+        </div>
     @endif
     <table class="w-full text-sm text-left rtl:text-right text-gray-500">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -129,7 +159,69 @@
                     {{ !empty($merchant['created_at']) ? Carbon::parse($merchant['created_at'])->format('d/m/Y') : '' }}
                 </th>
                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 break-words">
-                    {{ $merchant['unvan'] ? trim($merchant['unvan']) : '' }}
+                    @php
+                        $unvan = $merchant['unvan'] ? trim($merchant['unvan']) : '';
+                        $currentVkn = isset($merchant['tax_number']) ? trim((string) $merchant['tax_number']) : '';
+                        $vknGroup = ($currentVkn !== '' && isset($taxNumberGroups[$currentVkn]))
+                            ? $taxNumberGroups[$currentVkn]
+                            : null;
+                    @endphp
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span>{{ $unvan }}</span>
+                        @if($vknGroup && $vknGroup['count'] > 1)
+                            <div
+                                x-data="{ open: false }"
+                                @click.outside="open = false"
+                                @keydown.escape.window="open = false"
+                                class="relative inline-flex"
+                            >
+                                <button
+                                    type="button"
+                                    wire:key="vkn-badge-{{ $merchant['merchant_id'] }}"
+                                    @click.stop="open = !open"
+                                    class="inline-flex items-center justify-center min-w-[28px] h-6 px-2 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                    aria-label="Aynı VKN'ye ait mağazaları göster"
+                                >
+                                    ({{ $vknGroup['count'] }})
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-transition:enter="transition ease-out duration-150"
+                                    x-transition:enter-start="opacity-0 translate-y-1"
+                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                    x-transition:leave="transition ease-in duration-100"
+                                    x-transition:leave-start="opacity-100 translate-y-0"
+                                    x-transition:leave-end="opacity-0 translate-y-1"
+                                    class="absolute z-50 left-0 top-full mt-2 w-72 max-w-xs"
+                                    style="display: none;"
+                                >
+                                    <div class="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg">
+                                        <div class="font-semibold mb-1">Aynı VKN'ye ait mağazalar ({{ $vknGroup['count'] }}):</div>
+                                        <ul class="space-y-0.5">
+                                            @foreach($vknGroup['merchants'] as $related)
+                                                @php
+                                                    $relatedDomain = $related['domain'] !== '' ? $related['domain'] : '(domain yok)';
+                                                    $relatedUrl = !empty($related['merchant_id'])
+                                                        ? route('merchant-detail', ['id' => $related['merchant_id']])
+                                                        : null;
+                                                @endphp
+                                                <li class="truncate" title="{{ $relatedDomain }}">
+                                                    @if($relatedUrl)
+                                                        <a href="{{ $relatedUrl }}" target="_blank" class="text-blue-200 hover:text-white hover:underline">
+                                                            {{ $relatedDomain }} (ID : {{ $related['merchant_id'] }})
+                                                        </a>
+                                                    @else
+                                                        {{ $relatedDomain }}
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                    <div class="w-2 h-2 bg-gray-900 rotate-45 -mt-1 ml-3"></div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
                 </th>
                 <td class="px-6 py-4">
                     {{ $merchant['shop_domain'] ?? '' }}

@@ -23,4 +23,13 @@
         <div class="text-sm text-gray-500">Kontörü Biten</div>
         <div class="mt-1 text-2xl font-semibold text-gray-900">{{ $data["credit_expired"] ?? 0 }}</div>
     </div>
+    <div
+        wire:click="toggleMultiStoreFilter"
+        class="bg-white border {{ $multiStoreEnabled ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200' }} rounded-2xl p-4 cursor-pointer hover:border-blue-400 transition-colors"
+    >
+        <div class="text-sm text-gray-500">Çoklu Mağaza Kullananlar</div>
+        <div class="mt-1 text-2xl font-semibold text-gray-900">
+            {{ $multiStoreData["multi_store_count"] ?? 0 }}
+        </div>
+    </div>
 </div>
