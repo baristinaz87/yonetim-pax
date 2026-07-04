@@ -59,14 +59,22 @@ class ShopifyStoreDetail extends Component
 
     public function render(): View
     {
-        // Mağazanın kurulu olduğu uygulamalar
+        // Mağazanın tüm mağaza-uygulama kayıtlarının sayısı (tüm zamanlar)
+        $totalInstalledCount = $this->store->apps()->count();
+
+        // Mağazanın şu an kurulu olduğu uygulamalar.
+        // Yalnızca access_token olan ve status='active' olan kayıtlar "kurulu" sayılır.
+        // access_token yoksa/boşsa uygulama kaldırılmış kabul edilir ve listede gösterilmez.
         $installedApps = $this->store->apps()
             ->with('app:id,name,handle,logo')
+            ->where('status', 'active')
+            ->whereNotNull('access_token')
+            ->where('access_token', '!=', '')
             ->orderByDesc('installed_at')
             ->get();
 
-        $activeCount  = $installedApps->where('status', 'active')->count();
-        $uninstallCount = $installedApps->where('status', '!=', 'active')->count();
+        $activeCount   = $installedApps->count();
+        $uninstallCount = $totalInstalledCount - $activeCount;
 
         // Event timeline — mağazaya ait tüm event'lar
         $eventsQuery = $this->store->events()
@@ -94,13 +102,14 @@ class ShopifyStoreDetail extends Component
             ->get(['id', 'name', 'handle']);
 
         return view('livewire.shopify.shopify-store-detail', [
-            'installedApps' => $installedApps,
-            'activeCount'   => $activeCount,
-            'uninstallCount'=> $uninstallCount,
-            'events'        => $events,
-            'totalEvents'   => $totalEvents,
-            'lastPage'      => $lastPage,
-            'allApps'       => $allApps,
+            'installedApps'      => $installedApps,
+            'totalInstalledCount'=> $totalInstalledCount,
+            'activeCount'        => $activeCount,
+            'uninstallCount'     => $uninstallCount,
+            'events'             => $events,
+            'totalEvents'        => $totalEvents,
+            'lastPage'           => $lastPage,
+            'allApps'            => $allApps,
         ]);
     }
 }

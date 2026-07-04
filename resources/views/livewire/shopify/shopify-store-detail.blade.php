@@ -95,7 +95,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p class="text-xs text-blue-600 font-medium uppercase tracking-wider">Toplam Kurulum</p>
-                <p class="text-2xl font-bold text-blue-900 mt-1">{{ $installedApps->count() }}</p>
+                <p class="text-2xl font-bold text-blue-900 mt-1">{{ $totalInstalledCount }}</p>
             </div>
             <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p class="text-xs text-green-600 font-medium uppercase tracking-wider">Aktif Uygulama</p>
