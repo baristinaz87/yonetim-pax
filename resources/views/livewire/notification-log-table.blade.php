@@ -6,6 +6,7 @@
         <tr>
             <th scope="col" class="px-6 py-3">Tarih</th>
             <th scope="col" class="px-6 py-3">Mağaza</th>
+            <th scope="col" class="px-6 py-3">Uygulama</th>
             <th scope="col" class="px-6 py-3">Gönderim Tipi</th>
             <th scope="col" class="px-6 py-3">Gönderilen Adres</th>
             <th scope="col" class="px-6 py-3">Şablon Numarası</th>
@@ -20,6 +21,9 @@
                 </td>
                 <td class="px-6 py-4">
                     {{ $notification["myshopify_domain"] ?? "" }}
+                </td>
+                <td class="px-6 py-4">
+                    {{ $notification["app"] ?? "" }}
                 </td>
                 <td class="px-6 py-4">
                     {{ $notification["type"] ?? "" }}

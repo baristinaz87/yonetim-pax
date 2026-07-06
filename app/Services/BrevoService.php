@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\EmailContent;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use RuntimeException;
 
 /**
  *
@@ -50,8 +51,7 @@ class BrevoService
             $content = $response->getBody()->getContents();
             return json_decode($content, true);
         } catch (GuzzleException $e) {
-            // TODO
-            dd($e->getMessage());
+            throw new RuntimeException($e->getMessage(), previous: $e);
         }
     }
 
@@ -59,8 +59,7 @@ class BrevoService
     {
         $emailContent = EmailContent::find($templateId);
         if (!$emailContent instanceof EmailContent) {
-            // TODO
-            dd($templateId." id'li email şablonu bulunamadı.");
+            throw new RuntimeException($templateId." id'li email şablonu bulunamadı.");
         }
 
         return $this->sendEmail($toName, $emails, $emailContent->subject, $emailContent->content);
@@ -82,8 +81,7 @@ class BrevoService
             $content = $response->getBody()->getContents();
             return json_decode($content, true);
         } catch (GuzzleException $e) {
-            // TODO
-            dd($e->getMessage());
+            throw new RuntimeException($e->getMessage(), previous: $e);
         }
     }
 }
