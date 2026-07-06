@@ -50,6 +50,7 @@ Route::prefix('shopify')
 
         Route::view('stores', 'shopify-stores')->name('stores.index');
         Route::view('stores/{storeId}', 'shopify-store-detail')->name('stores.show');
+        Route::view('flows', 'shopify-flows')->name('flows');
     });
 
 // Google OAuth callback
