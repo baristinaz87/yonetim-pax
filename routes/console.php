@@ -15,14 +15,16 @@ Schedule::command('shopify:sync')
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/shopify-sync.log'));
 
-// Eksik access_token'ları her gece 02:00'de doldur.
+// Her gece 02:00'de: eksik access_token'ları doldur + mağaza bilgilerini zenginleştir.
+// 1 saatlik kilit ile aynı gün tekrar çalışması engellenir.
+//
 // Aktif ama token'ı boş olan mağaza-uygulama kayıtlarını bulur,
 // App'in get_access_token_endpoint'ini kullanarak token çeker.
 // API'de tanımlı olmayan mağazaları "uninstalled" olarak işaretler.
 // Token yazılan mağazalar için shop.json çağrısıyla store bilgileri zenginleştirilir.
 Schedule::command('shopify:fix-shop-informations')
     ->dailyAt('02:00')
-    ->withoutOverlapping(30)
+    ->withoutOverlapping(60)
     ->runInBackground()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/shopify-fix-shop-informations.log'));
