@@ -25,6 +25,7 @@ class App extends Model
         'logo',
         'api_auth_endpoint',
         'get_access_token_endpoint',
+        'get_app_data_endpoint',
         'auth_email',
         'auth_password',
         'active',

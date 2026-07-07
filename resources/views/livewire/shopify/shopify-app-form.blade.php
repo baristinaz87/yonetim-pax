@@ -113,6 +113,15 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                    <label for="get_app_data_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
+                        Get App Data Endpoint
+                    </label>
+                    <input wire:model="get_app_data_endpoint" type="url" id="get_app_data_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://api.example.com/get-app-data">
+                    @error('get_app_data_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-gray-500">Mağaza başına uygulama verisini JSON olarak döndüren tam URL. Gece sync'inde kullanılır.</p>
+                </div>
+
+                <div>
                     <label for="auth_email" class="block text-sm font-medium text-gray-700 mb-1">Auth Email</label>
                     <input wire:model="auth_email" type="email" id="auth_email" class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="user@example.com">
                     @error('auth_email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror

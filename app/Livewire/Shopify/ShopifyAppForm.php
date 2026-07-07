@@ -28,6 +28,7 @@ class ShopifyAppForm extends Component
     public string $logo = '';
     public string $api_auth_endpoint = '';
     public string $get_access_token_endpoint = '';
+    public string $get_app_data_endpoint = '';
     public string $auth_email = '';
     public string $auth_password = '';
     public bool $active = true;
@@ -62,6 +63,7 @@ class ShopifyAppForm extends Component
             'logo'               => 'nullable|string|max:255',
             'api_auth_endpoint'  => 'nullable|url|max:500',
             'get_access_token_endpoint' => 'nullable|url|max:500',
+            'get_app_data_endpoint' => 'nullable|url|max:500',
             'auth_email'         => 'nullable|email|max:255',
             // Düzenleme sırasında password opsiyonel — boş bırakılırsa mevcut korunur
             'auth_password'      => [$this->isEditing ? 'nullable' : 'required', 'string', 'max:1000'],
@@ -84,6 +86,7 @@ class ShopifyAppForm extends Component
             $this->logo               = $this->app->logo ?? '';
             $this->api_auth_endpoint  = $this->app->api_auth_endpoint ?? '';
             $this->get_access_token_endpoint = $this->app->get_access_token_endpoint ?? '';
+            $this->get_app_data_endpoint = $this->app->get_app_data_endpoint ?? '';
             $this->auth_email         = $this->app->auth_email ?? '';
             $this->auth_password      = $this->app->auth_password ?? '';
             $this->active             = $this->app->active;
@@ -102,6 +105,7 @@ class ShopifyAppForm extends Component
             'client_id'             => $this->client_id,
             'logo'                  => $this->logo ?: null,
             'api_auth_endpoint'     => $this->api_auth_endpoint ?: null,
+            'get_app_data_endpoint' => $this->get_app_data_endpoint ?: null,
             'get_access_token_endpoint' => $this->get_access_token_endpoint ?: null,
             'auth_email'            => $this->auth_email ?: null,
             'active'                => $this->active,
