@@ -30,6 +30,12 @@ class DeliveryApiClient
     /** HTTP timeout — sabit. App'ten okunmaz. */
     public const DEFAULT_TIMEOUT = 20;
 
+    /** 429 rate limit için max retry sayısı */
+    private const MAX_RETRIES_429 = 5;
+
+    /** 429 için ilk bekleme (saniye) — sonraki denemelerde exponential backoff */
+    private const INITIAL_BACKOFF_429 = 2;
+
     /** Token ömrü (saniye). Yenileme için eşik değer. */
     private const TOKEN_TTL_SECONDS = 3000; // 50 dk — garanti altında
 
@@ -135,6 +141,9 @@ class DeliveryApiClient
      * App'in get_access_token_endpoint'ine shop parametresi ile POST at.
      * Bearer token ile mağazanın Shopify OAuth access token'ını döner.
      *
+     * 429 rate limit durumunda Retry-After header'ına veya exponential
+     * backoff'a göre bekleyip tekrar dener.
+     *
      * @return string|null Token bulunursa string, bulunamazsa null.
      */
     public function getAccessTokenByShop(string $shopDomain): ?string
@@ -143,43 +152,65 @@ class DeliveryApiClient
 
         $tokenPath = $this->extractPath($this->app->get_access_token_endpoint);
 
-        try {
-            $response = $this->http->post($tokenPath, [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$token,
-                    'Accept'        => 'application/json',
-                ],
-                'query' => [
-                    'shop' => $shopDomain,
-                ],
-            ]);
-        } catch (ClientException $e) {
-            $status = $e->getResponse()?->getStatusCode();
+        $attempt = 0;
+        while (true) {
+            try {
+                $response = $this->http->post($tokenPath, [
+                    'headers' => [
+                        'Authorization' => 'Bearer '.$token,
+                        'Accept'        => 'application/json',
+                    ],
+                    'query' => [
+                        'shop' => $shopDomain,
+                    ],
+                ]);
+                break; // başarılı — döngüden çık
+            } catch (ClientException $e) {
+                $status = $e->getResponse()?->getStatusCode();
 
-            // 401/403 → token geçersiz olmuş olabilir, bir kez daha dene
-            if ($status === 401 || $status === 403) {
-                Log::warning("[delivery-api] {$shopDomain}: token reddedildi ({$status}), yeniden login deneniyor (app={$this->app->handle})");
-                $this->login();
-                return $this->getAccessTokenByShop($shopDomain);
+                // 429 → rate limit. Retry-After header'ı varsa onu kullan,
+                // yoksa exponential backoff uygula.
+                if ($status === 429) {
+                    $attempt++;
+                    if ($attempt > self::MAX_RETRIES_429) {
+                        throw new RuntimeException(
+                            "API get-token 429 rate limit aşıldı ({$attempt} deneme) [app={$this->app->handle}]",
+                            0,
+                            $e,
+                        );
+                    }
+                    $wait = $this->getRetryAfterDelay($e, $attempt);
+                    Log::warning("[delivery-api] {$shopDomain}: 429 rate limit, {$wait}s bekleniyor (deneme {$attempt}/".self::MAX_RETRIES_429.', app='.$this->app->handle.')');
+                    sleep($wait);
+                    continue;
+                }
+
+                // 401/403 → token geçersiz olmuş olabilir, bir kez daha dene
+                if ($status === 401 || $status === 403) {
+                    Log::warning("[delivery-api] {$shopDomain}: token reddedildi ({$status}), yeniden login deneniyor (app={$this->app->handle})");
+                    $this->login();
+                    $token = $this->bearerToken();
+                    continue;
+                }
+
+                // 404 → mağaza bu hesapta yok, sessizce null dön
+                if ($status === 404) {
+                    Log::info("[delivery-api] {$shopDomain}: bu hesapta tanımlı değil (app={$this->app->handle})");
+                    return null;
+                }
+
+                throw new RuntimeException(
+                    "API get-token başarısız ({$status}) [app={$this->app->handle}]: ".$e->getMessage(),
+                    0,
+                    $e,
+                );
+            } catch (GuzzleException $e) {
+                throw new RuntimeException(
+                    "API get-token başarısız [app={$this->app->handle}]: ".$e->getMessage(),
+                    0,
+                    $e,
+                );
             }
-
-            // 404 → mağaza bu hesapta yok, sessizce null dön
-            if ($status === 404) {
-                Log::info("[delivery-api] {$shopDomain}: bu hesapta tanımlı değil (app={$this->app->handle})");
-                return null;
-            }
-
-            throw new RuntimeException(
-                "API get-token başarısız ({$status}) [app={$this->app->handle}]: ".$e->getMessage(),
-                0,
-                $e,
-            );
-        } catch (GuzzleException $e) {
-            throw new RuntimeException(
-                "API get-token başarısız [app={$this->app->handle}]: ".$e->getMessage(),
-                0,
-                $e,
-            );
         }
 
         $body = json_decode((string) $response->getBody(), true);
@@ -199,6 +230,36 @@ class DeliveryApiClient
         }
 
         return $token;
+    }
+
+    /**
+     * 429 için bekleme süresini hesapla.
+     * Retry-After header'ı varsa onu tercih et (saniye veya HTTP-tarih),
+     * yoksa exponential backoff kullan.
+     */
+    private function getRetryAfterDelay(ClientException $e, int $attempt): int
+    {
+        $response = $e->getResponse();
+        $retryAfter = $response?->getHeaderLine('Retry-After');
+
+        if ($retryAfter !== '') {
+            // Saniye cinsinden olabilir
+            if (ctype_digit($retryAfter)) {
+                return min((int) $retryAfter, 60); // max 60s
+            }
+            // HTTP-tarih formatı
+            $ts = strtotime($retryAfter);
+            if ($ts !== false) {
+                return min(max(1, $ts - time()), 60);
+            }
+        }
+
+        // Exponential backoff: 2, 4, 8, 16, 32 (cap 30)
+        $delay = (int) min(self::INITIAL_BACKOFF_429 * (2 ** ($attempt - 1)), 30);
+
+        // ±%20 jitter ekleyerek thundering herd'i önle
+        $jitter = (int) ($delay * 0.2);
+        return $delay + random_int(-$jitter, $jitter);
     }
 
     /**
