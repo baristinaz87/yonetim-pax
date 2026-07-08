@@ -233,6 +233,117 @@ class DeliveryApiClient
     }
 
     /**
+     * App'in get_app_data_endpoint'ine shop bilgisi POST edilerek
+     * mağaza-uygulamaya özel JSON verisi alınır.
+     *
+     * Her uygulama kendi formatında döner; örnekler:
+     *   - ShopifyAdminProvider → shop benzeri ham veri
+     *   - FlowProvider         → flow metadata
+     *   - MerchantProvider     → merchant profil verisi
+     *
+     * Endpoint tanımlı değilse null döner — sessizce atlanır
+     * (opsiyonel adım, token akışını engellemez).
+     * 429/401/403 durumları getAccessTokenByShop ile aynı retry
+     * mantığını kullanır.
+     *
+     * @param  string $shopDomain   Mağaza domain (örn: foo.myshopify.com)
+     * @param  string $accessToken  Mağazanın Shopify OAuth access token'ı
+     * @return array<string,mixed>|null App data JSON array, yoksa null
+     */
+    public function getAppDataByShop(string $shopDomain, string $accessToken): ?array
+    {
+        // Endpoint tanımlı değilse sessizce geç — bu adım opsiyoneldir.
+        if (! $this->app->get_app_data_endpoint) {
+            return null;
+        }
+
+        $token    = $this->bearerToken();
+        $dataPath = $this->extractPath($this->app->get_app_data_endpoint);
+
+        $payload = [
+            'shop'         => $shopDomain,
+            'access_token' => $accessToken,
+        ];
+
+        $attempt = 0;
+        while (true) {
+            try {
+                $response = $this->http->post($dataPath, [
+                    'headers' => [
+                        'Authorization' => 'Bearer '.$token,
+                        'Accept'        => 'application/json',
+                    ],
+                    'json' => $payload,
+                ]);
+                break; // başarılı — döngüden çık
+            } catch (ClientException $e) {
+                $status = $e->getResponse()?->getStatusCode();
+
+                // 429 → rate limit. Retry-After header'ı varsa onu kullan,
+                // yoksa exponential backoff uygula.
+                if ($status === 429) {
+                    $attempt++;
+                    if ($attempt > self::MAX_RETRIES_429) {
+                        throw new RuntimeException(
+                            "API get-app-data 429 rate limit aşıldı ({$attempt} deneme) [app={$this->app->handle}]",
+                            0,
+                            $e,
+                        );
+                    }
+                    $wait = $this->getRetryAfterDelay($e, $attempt);
+                    Log::warning("[delivery-api] {$shopDomain}: 429 rate limit (app-data), {$wait}s bekleniyor (deneme {$attempt}/".self::MAX_RETRIES_429.', app='.$this->app->handle.')');
+                    sleep($wait);
+                    continue;
+                }
+
+                // 401/403 → token geçersiz olmuş olabilir, bir kez daha dene
+                if ($status === 401 || $status === 403) {
+                    Log::warning("[delivery-api] {$shopDomain}: token reddedildi ({$status}), yeniden login deneniyor (app={$this->app->handle})");
+                    $this->login();
+                    $token = $this->bearerToken();
+                    continue;
+                }
+
+                // 404 → uygulama bu mağaza için veri sunmuyor, sessizce null dön
+                if ($status === 404) {
+                    Log::info("[delivery-api] {$shopDomain}: app-data bulunamadı (app={$this->app->handle})");
+                    return null;
+                }
+
+                throw new RuntimeException(
+                    "API get-app-data başarısız ({$status}) [app={$this->app->handle}]: ".$e->getMessage(),
+                    0,
+                    $e,
+                );
+            } catch (GuzzleException $e) {
+                throw new RuntimeException(
+                    "API get-app-data başarısız [app={$this->app->handle}]: ".$e->getMessage(),
+                    0,
+                    $e,
+                );
+            }
+        }
+
+        $body = json_decode((string) $response->getBody(), true);
+        if (! is_array($body)) {
+            Log::info("[delivery-api] {$shopDomain}: app-data yanıtı JSON değil (app={$this->app->handle})");
+            return null;
+        }
+
+        // API yanıtı zarf formatında döner: { data: { ... } }.
+        // Sadece iç "data" objesini döndür — dış zarfta gereksiz anahtar olmasın.
+        // Uygulama örneği: { "data": { "email": "...", "credit": 303, ... } }
+        // → döner:        { "email": "...", "credit": 303, ... }
+        if (array_key_exists('data', $body) && is_array($body['data'])) {
+            return $body['data'];
+        }
+
+        // "data" anahtarı yoksa ham yanıtı olduğu gibi döndür
+        // (bazı uygulamalar düz payload dönebilir).
+        return $body;
+    }
+
+    /**
      * 429 için bekleme süresini hesapla.
      * Retry-After header'ı varsa onu tercih et (saniye veya HTTP-tarih),
      * yoksa exponential backoff kullan.

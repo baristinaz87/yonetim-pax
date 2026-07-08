@@ -91,36 +91,18 @@
                 HTTP timeout sabit <strong>20 saniye</strong>'dir.
             </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="api_auth_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
-                        API Auth Endpoint
-                    </label>
-                    <input wire:model="api_auth_endpoint" type="url" id="api_auth_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://api.example.com/login">
-                    @error('api_auth_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-gray-500">Bearer token alınacak tam URL (login endpoint).</p>
-                </div>
-
-                <div>
-                    <label for="get_access_token_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
-                        Get Access Token Endpoint
-                    </label>
-                    <input wire:model="get_access_token_endpoint" type="url" id="get_access_token_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://api.example.com/get-access-token">
-                    @error('get_access_token_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-gray-500">Shop başına token döndüren tam URL.</p>
-                </div>
+            {{-- 1. API Auth Endpoint (full width) --}}
+            <div>
+                <label for="api_auth_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
+                    API Auth Endpoint
+                </label>
+                <input wire:model="api_auth_endpoint" type="url" id="api_auth_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://api.example.com/login">
+                @error('api_auth_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                <p class="mt-1 text-xs text-gray-500">Bearer token alınacak tam URL (login endpoint).</p>
             </div>
 
+            {{-- 2. Auth Email + Auth Password (yan yana) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="get_app_data_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
-                        Get App Data Endpoint
-                    </label>
-                    <input wire:model="get_app_data_endpoint" type="url" id="get_app_data_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://api.example.com/get-app-data">
-                    @error('get_app_data_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    <p class="mt-1 text-xs text-gray-500">Mağaza başına uygulama verisini JSON olarak döndüren tam URL. Gece sync'inde kullanılır.</p>
-                </div>
-
                 <div>
                     <label for="auth_email" class="block text-sm font-medium text-gray-700 mb-1">Auth Email</label>
                     <input wire:model="auth_email" type="email" id="auth_email" class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="user@example.com">
@@ -134,6 +116,27 @@
                     </label>
                     <input wire:model="auth_password" type="password" id="auth_password" class="block w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="{{ $isEditing ? '•••••••• (değiştirmek için yazın)' : '••••••••' }}" autocomplete="off">
                     @error('auth_password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            {{-- 3. Get Access Token Endpoint + Get App Data Endpoint (yan yana) --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="get_access_token_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
+                        Get Access Token Endpoint
+                    </label>
+                    <input wire:model="get_access_token_endpoint" type="url" id="get_access_token_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://api.example.com/get-access-token">
+                    @error('get_access_token_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-gray-500">Shop başına token döndüren tam URL.</p>
+                </div>
+
+                <div>
+                    <label for="get_app_data_endpoint" class="block text-sm font-medium text-gray-700 mb-1">
+                        Get App Data Endpoint
+                    </label>
+                    <input wire:model="get_app_data_endpoint" type="url" id="get_app_data_endpoint" class="block w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://api.example.com/get-app-data">
+                    @error('get_app_data_endpoint') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-gray-500">Mağaza başına uygulama verisini JSON olarak döndüren tam URL. Gece sync'inde kullanılır.</p>
                 </div>
             </div>
         </fieldset>
