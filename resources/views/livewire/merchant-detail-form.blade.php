@@ -415,6 +415,19 @@
                     </select>
                 </div>
 
+                <!-- Vergi Muafiyet Kodu -->
+                <div>
+                    <label for="tax_code" class="block text-sm font-medium text-gray-700 mb-1">
+                        Vergi Muafiyet Kodu
+                    </label>
+                    <input
+                        type="text"
+                        id="tax_code"
+                        wire:model.defer="data.tax_code"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                    />
+                </div>
+
                 <!-- Aktif (Confirm) -->
                 <div>
                     <label for="confirm" class="block text-sm font-medium text-gray-700 mb-1">

@@ -93,6 +93,7 @@ class MerchantDetailForm extends Component
             "data.tax_number" => "required|string",
             "data.default_tax" => "required|integer",
             "data.tax_override" => "required|boolean",
+            "data.tax_code" => "required|integer",
             "data.confirm" => "required|boolean",
             "data.first_credit" => "required|boolean",
             "data.auto_send" => "required",
