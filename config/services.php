@@ -53,6 +53,7 @@ return [
     // UI'dan yönetilir; buradan kaldırıldı.
 
     'shopify' => [
+        'flow_test_mode' => env('FLOW_TEST_MODE', false),
         'partner' => [
             'org_id'      => env('SHOPIFY_PARTNER_ORG_ID'),
             'token'       => env('SHOPIFY_PARTNER_TOKEN'),

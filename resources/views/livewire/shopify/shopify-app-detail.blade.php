@@ -229,6 +229,8 @@
         @endif
     </div>
 
+    <livewire:shopify.shopify-flow-transactions :app-id="$app->id" />
+
     {{-- Geri butonu --}}
     <div class="flex justify-start">
         <a href="{{ route('shopify.apps') }}" wire:navigate class="text-sm text-gray-600 hover:text-gray-900">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Shopify;
 
+use App\Constant\ProviderTypeConstant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,12 +32,12 @@ class Flow extends Model
         'active'        => 'boolean',
     ];
 
-    public function matches(Event $event): bool
+    public function getTemplateIdForChannel(string $channel): int|string|null
     {
-        if (! $this->active || $this->event_type !== $event->type || ! $event->app_id) {
-            return false;
-        }
-
-        return in_array((int) $event->app_id, array_map('intval', $this->app_ids ?? []), true);
+        return match ($channel) {
+            ProviderTypeConstant::WP_PROVIDER => $this->whatsapp_template_id,
+            ProviderTypeConstant::EMAIL_PROVIDER => $this->email_template_id,
+            default => null,
+        };
     }
 }

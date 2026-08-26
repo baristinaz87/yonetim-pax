@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Livewire\Shopify;
 
 use App\Constant\ProviderTypeConstant;
+use App\Models\EmailContent;
+use App\Models\WpContent;
 use App\Models\Shopify\App;
 use App\Models\Shopify\Flow;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -49,8 +52,18 @@ class ShopifyFlowsTable extends Component
             'form.channels'             => ['required', 'array', 'min:1'],
             'form.channels.*'           => ['in:'.ProviderTypeConstant::WP_PROVIDER.','.ProviderTypeConstant::EMAIL_PROVIDER],
             'form.delay_minutes'        => ['required', 'integer', 'min:0', 'max:43200'],
-            'form.whatsapp_template_id' => ['nullable', 'string', 'max:50'],
-            'form.email_template_id'    => ['nullable', 'integer', 'min:1'],
+            'form.whatsapp_template_id' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::exists('wp_contents', 'brevo_template_id')->where('status', true),
+            ],
+            'form.email_template_id'    => [
+                'nullable',
+                'integer',
+                'min:1',
+                Rule::exists('email_contents', 'id')->where('status', true),
+            ],
             'form.active'               => ['boolean'],
         ])['form'];
 
@@ -124,11 +137,29 @@ class ShopifyFlowsTable extends Component
     public function render(): View
     {
         $apps = App::query()->orderBy('name')->get(['id', 'name', 'handle']);
+        $wpTemplates = WpContent::query()
+            ->where('status', true)
+            ->orderBy('name')
+            ->get(['name', 'brevo_template_id']);
+        $emailTemplates = EmailContent::query()
+            ->where('status', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        $wpTemplateNamesById = WpContent::query()
+            ->pluck('name', 'brevo_template_id')
+            ->all();
+        $emailTemplateNamesById = EmailContent::query()
+            ->pluck('name', 'id')
+            ->all();
 
         return view('livewire.shopify.shopify-flows-table', [
-            'flows'          => Flow::query()->latest()->get(),
-            'apps'           => $apps,
-            'appNamesById'   => $apps->pluck('name', 'id')->all(),
+            'flows'                  => Flow::query()->latest()->get(),
+            'apps'                   => $apps,
+            'appNamesById'           => $apps->pluck('name', 'id')->all(),
+            'wpTemplates'            => $wpTemplates,
+            'emailTemplates'         => $emailTemplates,
+            'wpTemplateNamesById'    => $wpTemplateNamesById,
+            'emailTemplateNamesById' => $emailTemplateNamesById,
         ]);
     }
 }

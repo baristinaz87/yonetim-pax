@@ -10,4 +10,7 @@
             <livewire:shopify.shopify-flows-table />
         </div>
     </div>
+    <div class="max-w-[1600px] mx-auto sm:px-6 lg:px-8 pb-12">
+        <livewire:shopify.shopify-flow-transactions />
+    </div>
 </x-app-layout>
