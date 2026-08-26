@@ -67,7 +67,14 @@
                         </label>
                         <div class="mt-3">
                             <label class="block text-sm font-medium text-gray-700 mb-1">WP Template</label>
-                            <input wire:model.defer="form.whatsapp_template_id" type="text" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" placeholder="Template ID giriniz">
+                            <select wire:model.defer="form.whatsapp_template_id" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                                <option value="">Template seçiniz</option>
+                                @foreach($wpTemplates as $template)
+                                    <option value="{{ $template->brevo_template_id }}">
+                                        {{ $template->name }} (#{{ $template->brevo_template_id }})
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('form.whatsapp_template_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -79,7 +86,14 @@
                         </label>
                         <div class="mt-3">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Mail Template</label>
-                            <input wire:model.defer="form.email_template_id" type="number" min="1" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200" placeholder="Template ID giriniz">
+                            <select wire:model.defer="form.email_template_id" class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200">
+                                <option value="">Template seçiniz</option>
+                                @foreach($emailTemplates as $template)
+                                    <option value="{{ $template->id }}">
+                                        {{ $template->name }} (#{{ $template->id }})
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('form.email_template_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -139,10 +153,10 @@
                                     </div>
                                     <div class="mt-1 text-xs text-gray-400">
                                         @if($flow->whatsapp_template_id)
-                                            WP: {{ $flow->whatsapp_template_id }}
+                                            WP: {{ $wpTemplateNamesById[$flow->whatsapp_template_id] ?? $flow->whatsapp_template_id }}
                                         @endif
                                         @if($flow->email_template_id)
-                                            Mail: {{ $flow->email_template_id }}
+                                            Mail: {{ $emailTemplateNamesById[$flow->email_template_id] ?? $flow->email_template_id }}
                                         @endif
                                     </div>
                                 </td>

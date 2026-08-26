@@ -280,4 +280,6 @@
             @endif
         @endif
     </div>
+
+    <livewire:shopify.shopify-flow-transactions :store-id="$store->id" />
 </div>
