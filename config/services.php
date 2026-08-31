@@ -54,6 +54,7 @@ return [
 
     'shopify' => [
         'flow_test_mode' => env('FLOW_TEST_MODE', false),
+        'flow_test_store_id' => env('FLOW_TEST_STORE_ID', 302),
         'partner' => [
             'org_id'      => env('SHOPIFY_PARTNER_ORG_ID'),
             'token'       => env('SHOPIFY_PARTNER_TOKEN'),

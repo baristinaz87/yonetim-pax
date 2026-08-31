@@ -24,8 +24,6 @@ use Illuminate\Support\Facades\Log;
  */
 class ShopifyEventObserver
 {
-    private const FLOW_TEST_STORE_ID = 302;
-
     public function created(Event $event): void
     {
         match ($event->type) {
@@ -54,7 +52,7 @@ class ShopifyEventObserver
         if (!$event->app_id) return;
 
         $shouldSkipForFlowTestMode = config('services.shopify.flow_test_mode', false)
-            && $event->store->id !== self::FLOW_TEST_STORE_ID;
+            && $event->store->id !== config('services.shopify.flow_test_store_id');
         if ($shouldSkipForFlowTestMode) return;
 
         Flow::query()
