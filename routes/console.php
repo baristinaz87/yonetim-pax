@@ -29,3 +29,9 @@ Schedule::command('shopify:fix-shop-informations')
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/shopify-fix-shop-informations.log'));
 
+// Her generator kendi gün/saat penceresini içeride denetler.
+Schedule::command('shopify:generate-events')
+    ->hourly()
+    ->withoutOverlapping(10)
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/shopify-event-generators.log'));

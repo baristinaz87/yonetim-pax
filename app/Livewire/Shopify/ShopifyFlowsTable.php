@@ -8,6 +8,7 @@ use App\Constant\ProviderTypeConstant;
 use App\Models\EmailContent;
 use App\Models\WpContent;
 use App\Models\Shopify\App;
+use App\Models\Shopify\EventGenerator;
 use App\Models\Shopify\Flow;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -42,11 +43,16 @@ class ShopifyFlowsTable extends Component
         ];
     }
 
+    public function updatedFormEventType(string $eventType): void
+    {
+        $this->form['app_ids'] = [];
+    }
+
     public function save(): void
     {
         $validated = $this->validate([
             'form.name'                 => ['required', 'string', 'max:255'],
-            'form.event_type'           => ['required', 'in:installed,uninstalled'],
+            'form.event_type'           => ['required', Rule::in(array_keys($this->availableEventTypes()))],
             'form.app_ids'              => ['required', 'array', 'min:1'],
             'form.app_ids.*'            => ['integer', 'exists:shopify_apps,id'],
             'form.channels'             => ['required', 'array', 'min:1'],
@@ -67,6 +73,14 @@ class ShopifyFlowsTable extends Component
             'form.active'               => ['boolean'],
         ])['form'];
 
+        $appIds = array_values(array_unique(array_map('intval', $validated['app_ids'])));
+        $allowedAppIds = $this->appIdsForEventType($validated['event_type']);
+        if ($allowedAppIds !== null && array_diff($appIds, $allowedAppIds) !== []) {
+            $this->addError('form.app_ids', 'Seçilen event oluşturucu için tanımlı uygulamalardan seçim yapmalısınız.');
+
+            return;
+        }
+
         $channels = array_values(array_unique($validated['channels']));
 
         if (in_array(ProviderTypeConstant::WP_PROVIDER, $channels, true) && empty($validated['whatsapp_template_id'])) {
@@ -82,7 +96,7 @@ class ShopifyFlowsTable extends Component
         $values = [
             'name'                 => $validated['name'],
             'event_type'           => $validated['event_type'],
-            'app_ids'              => array_values(array_map('intval', $validated['app_ids'])),
+            'app_ids'              => $appIds,
             'channels'             => $channels,
             'delay_minutes'        => (int) $validated['delay_minutes'],
             'whatsapp_template_id' => in_array(ProviderTypeConstant::WP_PROVIDER, $channels, true) ? $validated['whatsapp_template_id'] : null,
@@ -136,7 +150,11 @@ class ShopifyFlowsTable extends Component
 
     public function render(): View
     {
-        $apps = App::query()->orderBy('name')->get(['id', 'name', 'handle']);
+        $allApps = App::query()->orderBy('name')->get(['id', 'name', 'handle']);
+        $allowedAppIds = $this->appIdsForEventType((string) ($this->form['event_type'] ?? 'installed'));
+        $apps = $allowedAppIds === null
+            ? $allApps
+            : $allApps->whereIn('id', $allowedAppIds)->values();
         $wpTemplates = WpContent::query()
             ->where('status', true)
             ->orderBy('name')
@@ -155,11 +173,37 @@ class ShopifyFlowsTable extends Component
         return view('livewire.shopify.shopify-flows-table', [
             'flows'                  => Flow::query()->latest()->get(),
             'apps'                   => $apps,
-            'appNamesById'           => $apps->pluck('name', 'id')->all(),
+            'appNamesById'           => $allApps->pluck('name', 'id')->all(),
             'wpTemplates'            => $wpTemplates,
             'emailTemplates'         => $emailTemplates,
             'wpTemplateNamesById'    => $wpTemplateNamesById,
             'emailTemplateNamesById' => $emailTemplateNamesById,
+            'eventTypes'             => $this->availableEventTypes(),
         ]);
+    }
+
+    /** @return array<string, string> */
+    private function availableEventTypes(): array
+    {
+        return [
+            'installed' => 'Kuruldu',
+            'uninstalled' => 'Kaldırıldı',
+            ...EventGenerator::query()->active()->orderBy('name')->pluck('name', 'handle')->all(),
+        ];
+    }
+
+    /** @return array<int, int>|null Null means every application is allowed. */
+    private function appIdsForEventType(string $eventType): ?array
+    {
+        if (in_array($eventType, ['installed', 'uninstalled'], true)) {
+            return null;
+        }
+
+        $generator = EventGenerator::query()
+            ->active()
+            ->where('handle', $eventType)
+            ->first(['app_ids']);
+
+        return array_values(array_map('intval', $generator?->app_ids ?? []));
     }
 }

@@ -81,6 +81,9 @@ new class extends Component
                             <x-dropdown-link :href="route('shopify.flows')" wire:navigate>
                                 {{ __('Akışlar') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('shopify.event-generators')" wire:navigate>
+                                {{ __('Event Oluşturucular') }}
+                            </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
                 </div>
@@ -148,6 +151,9 @@ new class extends Component
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('shopify.flows')" :active="request()->routeIs('shopify.flows')" wire:navigate>
                 {{ __('Shopify Akışlar') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('shopify.event-generators')" :active="request()->routeIs('shopify.event-generators')" wire:navigate>
+                {{ __('Event Oluşturucular') }}
             </x-responsive-nav-link>
         </div>
 
