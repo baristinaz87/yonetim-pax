@@ -19,6 +19,7 @@ class Event extends Model
     protected $fillable = [
         'store_id',
         'app_id',
+        'event_generator_id',
         'type',
         'label',
         'data',
@@ -38,5 +39,10 @@ class Event extends Model
     public function app(): BelongsTo
     {
         return $this->belongsTo(App::class, 'app_id');
+    }
+
+    public function generator(): BelongsTo
+    {
+        return $this->belongsTo(EventGenerator::class, 'event_generator_id');
     }
 }

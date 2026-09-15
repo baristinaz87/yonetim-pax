@@ -51,6 +51,7 @@ Route::prefix('shopify')
         Route::view('stores', 'shopify-stores')->name('stores.index');
         Route::view('stores/{storeId}', 'shopify-store-detail')->name('stores.show');
         Route::view('flows', 'shopify-flows')->name('flows');
+        Route::view('event-generators', 'shopify-event-generators')->name('event-generators');
     });
 
 // Google OAuth callback
