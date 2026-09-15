@@ -55,7 +55,7 @@ class ShopifyFlowTransactions extends Component
     public function render(): View
     {
         $transactions = FlowTransaction::query()
-            ->with(['flow', 'event'])
+            ->with(['flow', 'event.store'])
             ->when(
                 $this->storeId,
                 fn ($query) => $query->whereHas('event', fn ($query) => $query->where('store_id', $this->storeId))
