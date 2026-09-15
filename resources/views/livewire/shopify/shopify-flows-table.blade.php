@@ -90,7 +90,7 @@
                                 <option value="">Template seçiniz</option>
                                 @foreach($emailTemplates as $template)
                                     <option value="{{ $template->id }}">
-                                        {{ $template->name }} (#{{ $template->id }})
+                                        {{ $template->name }} {{ $template->brevo_template_id !== null ? '(BrevoID: '.$template->brevo_template_id.')' : '(Veritabanı)' }}
                                     </option>
                                 @endforeach
                             </select>

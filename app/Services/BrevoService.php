@@ -62,7 +62,32 @@ class BrevoService
             throw new RuntimeException($templateId." id'li email şablonu bulunamadı.");
         }
 
+        if ($emailContent->brevo_template_id !== null) {
+            return $this->sendBrevoTemplateEmail($toName, $emails, $emailContent->brevo_template_id);
+        }
+
+        if ($emailContent->subject === null || $emailContent->content === null) {
+            throw new RuntimeException('Veritabanı şablonunda konu ve içerik zorunludur.');
+        }
+
         return $this->sendEmail($toName, $emails, $emailContent->subject, $emailContent->content);
+    }
+
+    private function sendBrevoTemplateEmail(string $toName, array $emails, int $brevoId): array
+    {
+        try {
+            $payload = [
+                'templateId' => $brevoId,
+                'sender' => ['name' => $this->senderEmailName, 'email' => $this->senderEmail],
+                'to' => $this->recipients($toName, $emails),
+            ];
+
+            $response = $this->client->post('/v3/smtp/email', ['json' => $payload]);
+
+            return json_decode($response->getBody()->getContents(), true);
+        } catch (GuzzleException $e) {
+            throw new RuntimeException($e->getMessage(), previous: $e);
+        }
     }
 
     private function sendEmail(string $toName, array $emails, string $subject, string $content): array
@@ -72,9 +97,7 @@ class BrevoService
                 "subject" => $subject,
                 "htmlContent" => $content,
                 "sender" => ["name" => $this->senderEmailName, "email" => $this->senderEmail],
-                "to" => array_map(function ($email) use ($toName) {
-                    return ["email" => $email, "name" => $toName];
-                }, $emails),
+                "to" => $this->recipients($toName, $emails),
             ];
 
             $response = $this->client->post("/v3/smtp/email", ["json" => $payload]);
@@ -83,5 +106,12 @@ class BrevoService
         } catch (GuzzleException $e) {
             throw new RuntimeException($e->getMessage(), previous: $e);
         }
+    }
+
+    private function recipients(string $toName, array $emails): array
+    {
+        return array_map(function ($email) use ($toName) {
+            return ['email' => $email, 'name' => $toName];
+        }, $emails);
     }
 }

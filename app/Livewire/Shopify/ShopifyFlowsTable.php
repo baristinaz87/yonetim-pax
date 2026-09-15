@@ -144,7 +144,7 @@ class ShopifyFlowsTable extends Component
         $emailTemplates = EmailContent::query()
             ->where('status', true)
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'brevo_template_id']);
         $wpTemplateNamesById = WpContent::query()
             ->pluck('name', 'brevo_template_id')
             ->all();
