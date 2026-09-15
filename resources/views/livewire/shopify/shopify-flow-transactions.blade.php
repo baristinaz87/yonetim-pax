@@ -48,7 +48,11 @@
                 <th class="px-4 py-3 w-10"></th>
 
                 <th class="px-6 py-3">
-                    Tarih
+                    Shop
+                </th>
+
+                <th class="px-6 py-3">
+                    Targets
                 </th>
 
                 <th class="px-6 py-3">
@@ -68,10 +72,6 @@
                 </th>
 
                 <th class="px-6 py-3">
-                    Gecikme
-                </th>
-
-                <th class="px-6 py-3">
                     Planlanan
                 </th>
 
@@ -79,13 +79,6 @@
                     Durum
                 </th>
 
-                <th class="px-6 py-3">
-                    Deneme
-                </th>
-
-                <th class="px-6 py-3">
-                    Sonuç
-                </th>
             </tr>
             </thead>
 
@@ -129,9 +122,31 @@
                         @endif
                     </td>
 
-                    {{-- Tarih --}}
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        {{ $transaction->created_at?->format('d/m/Y H:i:s') }}
+                    {{-- Shop --}}
+                    <td class="px-6 py-4">
+                        @if($transaction->event?->store)
+                            <a
+                                href="{{ route('shopify.stores.show', $transaction->event->store->id) }}"
+                                wire:navigate
+                                class="font-medium text-blue-700 hover:text-blue-900 hover:underline"
+                            >
+                                {{ $transaction->event->store->domain ?: $transaction->event->store->name }}
+                            </a>
+                        @else
+                            <span class="text-xs text-gray-400 italic">Mağaza bulunamadı</span>
+                        @endif
+
+                    </td>
+
+                    {{-- Targets --}}
+                    <td class="px-6 py-4">
+                        @if(!empty($transaction->targets))
+                            <div class="max-w-xs truncate text-xs text-gray-600" title="{{ implode(', ', $transaction->targets) }}">
+                                {{ implode(', ', $transaction->targets) }}
+                            </div>
+                        @else
+                            <span class="text-xs text-gray-400">-</span>
+                        @endif
                     </td>
 
                     {{-- Flow --}}
@@ -173,11 +188,6 @@
                         @else
                             {{ $transaction->template_id ?? '-' }}
                         @endif
-                    </td>
-
-                    {{-- Gecikme --}}
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        {{ $transaction->delay_minutes }} dk
                     </td>
 
                     {{-- Planlanan --}}
@@ -227,52 +237,13 @@
                         @endswitch
                     </td>
 
-                    {{-- Deneme --}}
-                    <td class="px-6 py-4 text-center">
-                        {{ $transaction->attempts }}
-                    </td>
-
-                    {{-- Sonuç --}}
-                    <td class="px-6 py-4 min-w-[300px]">
-
-                        @if(in_array($transaction->status, ['failed', 'try_again']))
-                            <div class="text-red-600">
-                                {{ $transaction->fail_reason ?? 'Bilinmeyen hata' }}
-                            </div>
-                        @endif
-
-                        @if(!empty($transaction->result))
-                            <div class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 mt-1 text-xs">
-
-                                @foreach($transaction->result as $key => $value)
-
-                                    <div class="text-slate-500">
-                                        {{ $key }}
-                                    </div>
-
-                                    <div class="text-slate-800 break-all">
-                                        @if(is_array($value) || is_object($value))
-                                            {{ json_encode($value, JSON_UNESCAPED_UNICODE) }}
-                                        @else
-                                            {{ $value }}
-                                        @endif
-                                    </div>
-
-                                @endforeach
-
-                            </div>
-                        @elseif(!in_array($transaction->status, ['failed', 'try_again']))
-                            -
-                        @endif
-                    </td>
-
                 </tr>
 
             @empty
 
                 <tr>
                     <td
-                        colspan="11"
+                        colspan="9"
                         class="px-6 py-8 text-center text-gray-400"
                     >
                         Flow işlem kaydı bulunamadı.
