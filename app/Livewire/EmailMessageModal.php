@@ -20,7 +20,10 @@ class EmailMessageModal extends Component
         $this->brevoService = new BrevoService();
         $emailContents = EmailContent::where('status', true)->get()->toArray();
         foreach ($emailContents as $emailContent) {
-            $this->templates[$emailContent['id']] = $emailContent['name'];
+            $source = $emailContent['brevo_template_id'] !== null
+                ? '(BrevoID: '.$emailContent['brevo_template_id'].')'
+                : '(Veritabanı)';
+            $this->templates[$emailContent['id']] = $emailContent['name'].' '.$source;
         }
     }
 

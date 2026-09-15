@@ -10,6 +10,14 @@ class EmailContent extends Model
         'name',
         'subject',
         'content',
+        'brevo_template_id',
         'status'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'brevo_template_id' => 'integer',
+        ];
+    }
 }
