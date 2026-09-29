@@ -29,6 +29,16 @@ Schedule::command('shopify:fix-shop-informations')
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/shopify-fix-shop-informations.log'));
 
+// Her saatin 30. dakikasında: aktif + token'ı dolu mağaza-uygulama kayıtları için
+// get_app_data_endpoint'ten app data çekip shopify_store_app_data'ya yazar.
+// generate-events saat başında çalıştığı için ondan önce veri tazelenmiş olur.
+Schedule::command('shopify:update-app-shop-data')
+    ->hourlyAt(30)
+    ->withoutOverlapping(60)
+    ->runInBackground()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/shopify-update-app-shop-data.log'));
+
 // Her generator kendi gün/saat penceresini içeride denetler.
 Schedule::command('shopify:generate-events')
     ->hourly()
