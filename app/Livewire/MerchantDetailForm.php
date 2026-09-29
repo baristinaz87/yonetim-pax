@@ -41,6 +41,8 @@ class MerchantDetailForm extends Component
             $setting['credit_tracking_at'] = Carbon::parse($setting['credit_tracking_at'])->format('Y-m-d');
         if (!empty($setting['credit_expired_at']))
             $setting['credit_expired_at'] = Carbon::parse($setting['credit_expired_at'])->format('Y-m-d');
+        if (!empty($setting['gift_credit_reset_at']))
+            $setting['gift_credit_reset_at'] = Carbon::parse($setting['gift_credit_reset_at'])->format('Y-m-d');
         if (!empty($setting['created_at']))
             $setting['created_at'] = Carbon::parse($setting['created_at'])->format('Y-m-d');
         if (!empty($setting['auto_fulfillment_date']))

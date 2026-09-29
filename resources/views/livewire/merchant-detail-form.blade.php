@@ -169,6 +169,30 @@
                     />
                 </div>
                 <div>
+                    <label for="gift_credit" class="block text-sm font-medium text-gray-700 mb-1">
+                        Hediye Kontör
+                    </label>
+                    <input
+                        disabled
+                        type="text"
+                        id="gift_credit"
+                        wire:model.defer="data.gift_credit"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+                <div>
+                    <label for="gift_credit_reset_at" class="block text-sm font-medium text-gray-700 mb-1">
+                        Hediye Kontör Yenileme Tarihi
+                    </label>
+                    <input
+                        disabled
+                        type="date"
+                        id="gift_credit_reset_at"
+                        wire:model.defer="data.gift_credit_reset_at"
+                        class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                </div>
+                <div>
                     <label for="last_top_up_at" class="block text-sm font-medium text-gray-700 mb-1">
                         Son Kontör Yükleme Tarihi
                     </label>
@@ -533,6 +557,7 @@
                         <option value="0">Hayır</option>
                         <option value="1">Evet - Sipariş Alındığında</option>
                         <option value="2">Evet - Kargoya Verildiğinde</option>
+                        <option value="3">Evet - Kargo Teslim Edildiğinde</option>
                     </select>
                 </div>
                 <div>
