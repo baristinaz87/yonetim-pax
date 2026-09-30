@@ -18,6 +18,10 @@ class GenerateShopifyEvents extends Command
     public function handle(EventGeneratorEvaluator $evaluator): int
     {
         $generatorId = $this->option('generator') ? (int) $this->option('generator') : null;
+
+        if (config('services.shopify.flow_test_mode', false)) {
+            $this->warn('FLOW_TEST_MODE açık: sadece test mağazası (store_id='.(int) config('services.shopify.flow_test_store_id').') için event üretilecek.');
+        }
         $stats = $evaluator->evaluate($generatorId, (bool) $this->option('dry-run'));
 
         $this->table(['Kontrol', 'Adet'], [

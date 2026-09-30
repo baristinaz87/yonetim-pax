@@ -35,6 +35,11 @@ class EventGeneratorEvaluator
             ->orderBy('id')
             ->get();
 
+        // Flow test modunda sadece test mağazası için event üretilir.
+        $testStoreId = config('services.shopify.flow_test_mode', false)
+            ? (int) config('services.shopify.flow_test_store_id')
+            : null;
+
         foreach ($generators as $generator) {
             $appIds = array_values(array_filter(array_map('intval', $generator->app_ids ?? [])));
             if ($appIds === []) {
@@ -49,6 +54,7 @@ class EventGeneratorEvaluator
                 })
                 ->where('shopify_store_apps.status', 'active')
                 ->whereIn('shopify_store_app_data.app_id', $appIds)
+                ->when($testStoreId, fn ($query) => $query->where('shopify_store_app_data.store_id', $testStoreId))
                 ->orderBy('shopify_store_app_data.id')
                 ->chunkById(200, function ($records) use ($generator, $dryRun, &$stats): void {
                     // Record burda app_data satırı

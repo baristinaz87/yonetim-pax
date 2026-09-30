@@ -133,7 +133,7 @@
                     </thead>
                     <tbody>
                         @forelse($flows as $flow)
-                            <tr class="bg-white border-b hover:bg-gray-50">
+                            <tr class="border-b {{ $flow->active ? 'bg-white hover:bg-gray-50' : 'bg-red-50 hover:bg-red-100' }}">
                                 <td class="px-6 py-4">
                                     <div class="font-medium text-gray-900">{{ $flow->name }}</div>
                                     @php

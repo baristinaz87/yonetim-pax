@@ -52,7 +52,7 @@ class ShopifyEventObserver
         if (!$event->app_id) return;
 
         $shouldSkipForFlowTestMode = config('services.shopify.flow_test_mode', false)
-            && $event->store->id !== config('services.shopify.flow_test_store_id');
+            && (int) $event->store_id !== (int) config('services.shopify.flow_test_store_id');
         if ($shouldSkipForFlowTestMode) return;
 
         Flow::query()
