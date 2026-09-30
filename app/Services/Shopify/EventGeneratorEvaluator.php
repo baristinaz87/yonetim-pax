@@ -8,12 +8,23 @@ use App\Models\Shopify\Event;
 use App\Models\Shopify\EventGenerator;
 use App\Models\Shopify\StoreAppData;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class EventGeneratorEvaluator
 {
     private const MISSING = '__shopify_event_generator_missing__';
+
+    private const LOCK_PREFIX = 'shopify-event-generator:';
+
+    /** Kilidin en uzun tutulma süresi; süreç ölürse kilit bu sürede kendiliğinden açılır. */
+    private const LOCK_SECONDS = 600;
+
+    /** Başka bir değerlendirme sürerken kilidin açılması için beklenecek en uzun süre. */
+    private const LOCK_WAIT_SECONDS = 120;
 
     /**
      * @return array{checked: int, matched: int, emitted: int, cooldown_skipped: int, schedule_skipped: int, stale_skipped: int}
@@ -46,76 +57,96 @@ class EventGeneratorEvaluator
                 continue;
             }
 
-            StoreAppData::query()
-                ->select('shopify_store_app_data.*')
-                ->join('shopify_store_apps', function (JoinClause $join): void {
-                    $join->on('shopify_store_apps.store_id', '=', 'shopify_store_app_data.store_id')
-                        ->on('shopify_store_apps.app_id', '=', 'shopify_store_app_data.app_id');
-                })
-                ->where('shopify_store_apps.status', 'active')
-                ->whereIn('shopify_store_app_data.app_id', $appIds)
-                ->when($testStoreId, fn ($query) => $query->where('shopify_store_app_data.store_id', $testStoreId))
-                ->orderBy('shopify_store_app_data.id')
-                ->chunkById(200, function ($records) use ($generator, $dryRun, &$stats): void {
-                    // Record burda app_data satırı
-                    foreach ($records as $record) {
-                        $stats['checked']++;
+            $evaluateGenerator = function () use ($generator, $appIds, $testStoreId, $dryRun, &$stats): void {
+                StoreAppData::query()
+                    ->select('shopify_store_app_data.*')
+                    ->join('shopify_store_apps', function (JoinClause $join): void {
+                        $join->on('shopify_store_apps.store_id', '=', 'shopify_store_app_data.store_id')
+                            ->on('shopify_store_apps.app_id', '=', 'shopify_store_app_data.app_id');
+                    })
+                    ->where('shopify_store_apps.status', 'active')
+                    ->whereIn('shopify_store_app_data.app_id', $appIds)
+                    ->when($testStoreId, fn ($query) => $query->where('shopify_store_app_data.store_id', $testStoreId))
+                    ->orderBy('shopify_store_app_data.id')
+                    ->chunkById(200, function ($records) use ($generator, $dryRun, &$stats): void {
+                        // Record burda app_data satırı
+                        foreach ($records as $record) {
+                            $stats['checked']++;
 
-                        // app_data verisi "Veri Tazeliği" süresinden eskiyse
-                        if ($generator->max_data_age_minutes !== null
-                            && $record->updated_at?->lessThan(now()->subMinutes($generator->max_data_age_minutes))) {
-                            $stats['stale_skipped']++;
-                            continue;
-                        }
+                            // app_data verisi "Veri Tazeliği" süresinden eskiyse
+                            if ($generator->max_data_age_minutes !== null
+                                && $record->updated_at?->lessThan(now()->subMinutes($generator->max_data_age_minutes))) {
+                                $stats['stale_skipped']++;
+                                continue;
+                            }
 
-                        // Generator için ayarlanmış zaman aralığında değilsek
-                        if (! $this->isWithinSchedule($generator->schedule ?? [])) {
-                            $stats['schedule_skipped']++;
-                            continue;
-                        }
+                            // Generator için ayarlanmış zaman aralığında değilsek
+                            if (! $this->isWithinSchedule($generator->schedule ?? [])) {
+                                $stats['schedule_skipped']++;
+                                continue;
+                            }
 
-                        // Koşullara göre eşleşme kontrolü
-                        $matchedValues = $this->matchedValues($record->data ?? [], $generator->conditions ?? [], $generator->condition_logic);
-                        if ($matchedValues === null) {
-                            continue;
-                        }
+                            // Koşullara göre eşleşme kontrolü
+                            $matchedValues = $this->matchedValues($record->data ?? [], $generator->conditions ?? [], $generator->condition_logic);
+                            if ($matchedValues === null) {
+                                continue;
+                            }
 
-                        $stats['matched']++;
+                            $stats['matched']++;
 
-                        // Tekrar oluşturma için Cooldown süresi kontrolü
-                        if ($this->isInCooldown($generator, $record->store_id, $record->app_id)) {
-                            $stats['cooldown_skipped']++;
-                            continue;
-                        }
+                            // Tekrar oluşturma için Cooldown süresi kontrolü
+                            if ($this->isInCooldown($generator, $record->store_id, $record->app_id)) {
+                                $stats['cooldown_skipped']++;
+                                continue;
+                            }
 
-                        // Önizleme modu kontrolü
-                        if ($dryRun) {
-                            $stats['emitted']++;
-                            continue;
-                        }
+                            // Önizleme modu kontrolü
+                            if ($dryRun) {
+                                $stats['emitted']++;
+                                continue;
+                            }
 
-                        Event::create([
-                            'store_id' => $record->store_id,
-                            'app_id' => $record->app_id,
-                            'event_generator_id' => $generator->id,
-                            'type' => $generator->handle,
-                            'label' => $generator->name,
-                            'data' => [
-                                'source' => 'event_generator',
-                                'generator' => [
-                                    'id' => $generator->id,
-                                    'handle' => $generator->handle,
-                                    'name' => $generator->name,
+                            Event::create([
+                                'store_id' => $record->store_id,
+                                'app_id' => $record->app_id,
+                                'event_generator_id' => $generator->id,
+                                'type' => $generator->handle,
+                                'label' => $generator->name,
+                                'data' => [
+                                    'source' => 'event_generator',
+                                    'generator' => [
+                                        'id' => $generator->id,
+                                        'handle' => $generator->handle,
+                                        'name' => $generator->name,
+                                    ],
+                                    'matched_values' => $matchedValues,
+                                    'evaluated_at' => now()->toIso8601String(),
                                 ],
-                                'matched_values' => $matchedValues,
-                                'evaluated_at' => now()->toIso8601String(),
-                            ],
-                            'created_at' => now(),
-                        ]);
+                                'created_at' => now(),
+                            ]);
 
-                        $stats['emitted']++;
-                    }
-                }, 'shopify_store_app_data.id', 'id');
+                            $stats['emitted']++;
+                        }
+                    }, 'shopify_store_app_data.id', 'id');
+            };
+
+            // Önizleme event yazmadığı için kilide gerek yok.
+            if ($dryRun) {
+                $evaluateGenerator();
+                continue;
+            }
+
+            // Saatlik komut, paneldeki "Çalıştır" butonu ve elle çalıştırma aynı
+            // generator'ı aynı anda değerlendirirse ikisi de cooldown'dan geçip
+            // mükerrer event (→ mükerrer mail) üretebilir. Generator bazında kilit
+            // ile değerlendirmeler sıraya girer; sonraki, öncekinin event'ini görür.
+            try {
+                Cache::lock(self::LOCK_PREFIX.$generator->id, self::LOCK_SECONDS)
+                    ->block(self::LOCK_WAIT_SECONDS, $evaluateGenerator);
+            } catch (LockTimeoutException) {
+                Log::warning("[event-generator] generator={$generator->id} başka bir değerlendirme sürüyor, "
+                    .self::LOCK_WAIT_SECONDS.' sn beklendi ve atlandı');
+            }
         }
 
         return $stats;

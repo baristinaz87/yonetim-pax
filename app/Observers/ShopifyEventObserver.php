@@ -7,8 +7,7 @@ namespace App\Observers;
 use App\Jobs\Shopify\InstallJob;
 use App\Jobs\Shopify\UninstallJob;
 use App\Models\Shopify\Event;
-use App\Models\Shopify\Flow;
-use App\Models\Shopify\FlowTransaction;
+use App\Services\Shopify\FlowTransactionCreator;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -18,12 +17,20 @@ use Illuminate\Support\Facades\Log;
  *   type='installed'   → InstallJob
  *   type='uninstalled' → UninstallJob
  *
+ * Flow transaction'ları:
+ *   - 'installed' için InstallJob, mağaza bilgileri (token + shop.json)
+ *     toplandıktan sonra açar; böylece kurulum maili e-posta adresi
+ *     belli olmadan gönderilmez.
+ *   - Diğer tüm event'ler için burada hemen açılır.
+ *
  * Observer üzerinden dispatch etmek şu avantajları sağlar:
  *   - PartnerSyncService (cron) ve WebhookController (canlı) aynı yolu izler
  *   - Yeni bir event yaratan kod parçası job dispatch'ı unutsa bile observer halleder
  */
 class ShopifyEventObserver
 {
+    public function __construct(private readonly FlowTransactionCreator $flowTransactions) {}
+
     public function created(Event $event): void
     {
         match ($event->type) {
@@ -32,7 +39,9 @@ class ShopifyEventObserver
             default       => Log::info("[shopify-event-observer] bilinmeyen event type: {$event->type}"),
         };
 
-        $this->createFlowTransactions($event);
+        if ($event->type !== 'installed') {
+            $this->flowTransactions->createForEvent($event);
+        }
     }
 
     private function dispatchInstall(Event $event): void
@@ -45,48 +54,5 @@ class ShopifyEventObserver
     {
         UninstallJob::dispatch($event->id);
         Log::info("[shopify-event-observer] UninstallJob dispatch: event_id={$event->id}");
-    }
-
-    private function createFlowTransactions(Event $event): void
-    {
-        if (!$event->app_id) return;
-
-        $shouldSkipForFlowTestMode = config('services.shopify.flow_test_mode', false)
-            && (int) $event->store_id !== (int) config('services.shopify.flow_test_store_id');
-        if ($shouldSkipForFlowTestMode) return;
-
-        Flow::query()
-            ->where('active', true)
-            ->where('event_type', $event->type)
-            ->whereJsonContains('app_ids', (int) $event->app_id)
-            ->each(function (Flow $flow) use ($event) {
-                foreach ($flow->channels ?? [] as $channel) {
-                    $templateId = $flow->getTemplateIdForChannel($channel);
-                    if (!$templateId) continue;
-                    $scheduledAt = now()->addMinutes($flow->delay_minutes);
-                    FlowTransaction::firstOrCreate(
-                        [
-                            'flow_id' => $flow->id,
-                            'event_id' => $event->id,
-                            'channel' => $channel,
-                        ],
-                        [
-                            'template_id' => $templateId,
-                            'delay_minutes' => $flow->delay_minutes,
-                            'scheduled_at' => $scheduledAt,
-
-                            'flow_snapshot' => [
-                                'name' => $flow->name,
-                                'event_type' => $flow->event_type,
-                                'app_ids' => $flow->app_ids,
-                                'channels' => $flow->channels,
-                                'delay_minutes' => $flow->delay_minutes,
-                                'whatsapp_template_id' => $flow->whatsapp_template_id,
-                                'email_template_id' => $flow->email_template_id,
-                            ],
-                        ],
-                    );
-                }
-            });
     }
 }

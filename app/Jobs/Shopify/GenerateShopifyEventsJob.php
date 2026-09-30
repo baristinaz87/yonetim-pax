@@ -9,7 +9,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class GenerateShopifyEventsJob implements ShouldQueue
@@ -23,11 +22,10 @@ class GenerateShopifyEventsJob implements ShouldQueue
         public readonly bool $dryRun = false,
     ) {}
 
-    public function middleware(): array
-    {
-        return [(new WithoutOverlapping('shopify-event-generators'))->dontRelease()];
-    }
-
+    /**
+     * Eşzamanlı çalışmaya karşı kilit EventGeneratorEvaluator içinde,
+     * generator bazında tutulur (komut ve buton aynı kilidi paylaşır).
+     */
     public function handle(EventGeneratorEvaluator $evaluator): void
     {
         $evaluator->evaluate($this->generatorId, $this->dryRun);
