@@ -29,6 +29,7 @@ use Throwable;
  * Kullanım:
  *   php artisan shopify:update-app-shop-data
  *   php artisan shopify:update-app-shop-data --app=foo
+ *   php artisan shopify:update-app-shop-data --app-id=3
  *   php artisan shopify:update-app-shop-data --store=bar.myshopify.com
  *   php artisan shopify:update-app-shop-data --dry-run
  */
@@ -39,6 +40,7 @@ class UpdateAppShopData extends Command
 
     protected $signature = 'shopify:update-app-shop-data
                             {--app=    : Sadece bu handle için çalış}
+                            {--app-id= : Sadece bu app id için çalış}
                             {--store=  : Sadece bu mağaza domain için çalış}
                             {--dry-run : Veritabanını güncellemeden sadece raporla}
                             {--delay-ms= : Aynı app için ardışık istekler arası min bekleme (ms). Varsayılan: 250, 0=kapalı}';
@@ -49,6 +51,7 @@ class UpdateAppShopData extends Command
     {
         $dryRun     = (bool) $this->option('dry-run');
         $appOpt     = $this->option('app');
+        $appIdOpt   = $this->option('app-id');
         $storeOpt   = $this->option('store');
         $minDelayMs = (int) $this->option('delay-ms') ?: self::DEFAULT_MIN_DELAY_MS;
 
@@ -57,6 +60,10 @@ class UpdateAppShopData extends Command
         }
         if ($dryRun) {
             $this->warn('DRY-RUN modu: veritabanı güncellenmeyecek.');
+        }
+        if ($appIdOpt !== null && ! ctype_digit((string) $appIdOpt)) {
+            $this->error("--app-id sayı olmalı: {$appIdOpt}");
+            return self::FAILURE;
         }
 
         // Hedef kayıtları seç: status='active' VE access_token dolu.
@@ -70,6 +77,9 @@ class UpdateAppShopData extends Command
 
         if ($appOpt) {
             $query->whereHas('app', fn ($q) => $q->where('handle', $appOpt));
+        }
+        if ($appIdOpt !== null) {
+            $query->where('app_id', (int) $appIdOpt);
         }
         if ($storeOpt) {
             $query->whereHas('store', fn ($q) => $q->where('domain', $storeOpt));
@@ -156,10 +166,16 @@ class UpdateAppShopData extends Command
 
                 if ($appData !== null) {
                     if (! $dryRun) {
-                        StoreAppData::updateOrCreate(
+                        $storeAppData = StoreAppData::updateOrCreate(
                             ['store_id' => $sa->store_id, 'app_id' => $sa->app_id],
                             ['data'     => $appData],
                         );
+                        // Veri aynıysa updateOrCreate updated_at'i değiştirmez; event
+                        // oluşturucuların "Veri Tazeliği" kontrolü updated_at'e baktığı
+                        // için başarılı her çekimde zaman damgası tazelenir.
+                        if (! $storeAppData->wasRecentlyCreated && ! $storeAppData->wasChanged()) {
+                            $storeAppData->touch();
+                        }
                     }
                     $stats['fetched']++;
                     Log::info("[update-app-data] {$app->handle}@{$domain}: app data alındı ve kaydedildi");

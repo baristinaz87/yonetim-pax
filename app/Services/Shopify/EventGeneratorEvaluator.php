@@ -40,8 +40,9 @@ class EventGeneratorEvaluator
             'stale_skipped' => 0,
         ];
 
+        // Tek bir generator'ın önizlemesi pasifken de çalışır; aktif etmeden önce test edilebilsin.
         $generators = EventGenerator::query()
-            ->active()
+            ->when(! ($dryRun && $generatorId), fn ($query) => $query->active())
             ->when($generatorId, fn ($query) => $query->whereKey($generatorId))
             ->orderBy('id')
             ->get();
@@ -73,6 +74,15 @@ class EventGeneratorEvaluator
                         foreach ($records as $record) {
                             $stats['checked']++;
 
+                            // Koşullara göre eşleşme kontrolü. Atlama nedenleri bundan sonra
+                            // bakılır ki sayaçlar sadece eşleşen (event'e aday) kayıtları saysın.
+                            $matchedValues = $this->matchedValues($record->data ?? [], $generator->conditions ?? [], $generator->condition_logic);
+                            if ($matchedValues === null) {
+                                continue;
+                            }
+
+                            $stats['matched']++;
+
                             // app_data verisi "Veri Tazeliği" süresinden eskiyse
                             if ($generator->max_data_age_minutes !== null
                                 && $record->updated_at?->lessThan(now()->subMinutes($generator->max_data_age_minutes))) {
@@ -85,14 +95,6 @@ class EventGeneratorEvaluator
                                 $stats['schedule_skipped']++;
                                 continue;
                             }
-
-                            // Koşullara göre eşleşme kontrolü
-                            $matchedValues = $this->matchedValues($record->data ?? [], $generator->conditions ?? [], $generator->condition_logic);
-                            if ($matchedValues === null) {
-                                continue;
-                            }
-
-                            $stats['matched']++;
 
                             // Tekrar oluşturma için Cooldown süresi kontrolü
                             if ($this->isInCooldown($generator, $record->store_id, $record->app_id)) {

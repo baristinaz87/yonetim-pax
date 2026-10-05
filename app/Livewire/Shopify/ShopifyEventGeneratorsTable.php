@@ -7,7 +7,9 @@ namespace App\Livewire\Shopify;
 use App\Jobs\Shopify\GenerateShopifyEventsJob;
 use App\Models\Shopify\App;
 use App\Models\Shopify\EventGenerator;
+use App\Services\Shopify\AppDataKeySummarizer;
 use App\Services\Shopify\EventGeneratorEvaluator;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -174,8 +176,9 @@ class ShopifyEventGeneratorsTable extends Component
     public function preview(int $generatorId, EventGeneratorEvaluator $evaluator): void
     {
         $s = $evaluator->evaluate($generatorId, true);
+        $prefix = EventGenerator::whereKey($generatorId)->value('active') ? 'Önizleme' : 'Önizleme (pasif, aktif olsaydı)';
         $this->flashMessage(
-            "Önizleme: {$s['checked']} kayıt incelendi, {$s['matched']} eşleşme, {$s['cooldown_skipped']} cooldown, {$s['schedule_skipped']} çalışma zamanlaması ve {$s['stale_skipped']} eski veri nedeniyle atlandı. {$s['emitted']} event oluşturulabilir.",
+            "{$prefix}: {$s['checked']} kayıt incelendi, {$s['matched']} eşleşme, {$s['cooldown_skipped']} cooldown, {$s['schedule_skipped']} çalışma zamanlaması ve {$s['stale_skipped']} eski veri nedeniyle atlandı. {$s['emitted']} event oluşturulabilir.",
         );
     }
 
@@ -192,7 +195,23 @@ class ShopifyEventGeneratorsTable extends Component
         return view('livewire.shopify.shopify-event-generators-table', [
             'generators' => EventGenerator::query()->latest()->get(), 'apps' => $apps,
             'appNamesById' => $apps->mapWithKeys(fn (App $app) => [$app->id => $app->name.' ('.$app->handle.')'])->all(),
+            'appDataKeys' => $this->appDataKeys($apps),
         ]);
+    }
+
+    /**
+     * Formda seçili uygulamaların app data alanları; koşul yazarken yol gösterir.
+     *
+     * @param  Collection<int, App>  $apps
+     * @return array<int, array{name: string, handle: string, records: int, keys: array<string, array{types: list<string>, count: int, samples: list<string>}>}>
+     */
+    private function appDataKeys(Collection $apps): array
+    {
+        $summarizer = app(AppDataKeySummarizer::class);
+
+        return $apps->whereIn('id', array_map('intval', $this->form['app_ids'] ?? []))
+            ->mapWithKeys(fn (App $app) => [$app->id => ['name' => $app->name, 'handle' => $app->handle] + $summarizer->summarize($app->id)])
+            ->all();
     }
 
     private function emptyCondition(): array

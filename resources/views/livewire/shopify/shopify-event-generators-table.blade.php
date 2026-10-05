@@ -8,15 +8,62 @@
                 <div><label class="mb-1 block text-sm font-medium">Cooldown (dakika)</label><input wire:model.defer="form.cooldown_minutes" type="number" min="0" class="block w-full rounded border-gray-300"><p class="mt-1 text-xs text-gray-500">0: her kontrolde event oluşturabilir.</p>@error('form.cooldown_minutes')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="mb-1 block text-sm font-medium">Veri tazeliği (dk)</label><input wire:model.defer="form.max_data_age_minutes" type="number" min="1" class="block w-full rounded border-gray-300" placeholder="Sınırsız"><p class="mt-1 text-xs text-gray-500">Eski veride event üretmez.</p>@error('form.max_data_age_minutes')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
             </div>
-            <div><label class="mb-2 block text-sm font-medium">Uygulamalar</label><div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">@foreach($apps as $app)<label class="flex items-center gap-2 rounded border border-gray-200 px-3 py-2 text-sm"><input wire:model.defer="form.app_ids" type="checkbox" value="{{ $app->id }}" class="rounded border-gray-300 text-blue-600"><span>{{ $app->name }}</span><span class="font-mono text-xs text-gray-400">{{ $app->handle }}</span></label>@endforeach</div>@error('form.app_ids')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
-            <div class="rounded border border-gray-200 p-4">
+            <div><label class="mb-2 block text-sm font-medium">Uygulamalar</label><div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">@foreach($apps as $app)<label class="flex items-center gap-2 rounded border border-gray-200 px-3 py-2 text-sm"><input wire:model.live="form.app_ids" type="checkbox" value="{{ $app->id }}" class="rounded border-gray-300 text-blue-600"><span>{{ $app->name }}</span><span class="font-mono text-xs text-gray-400">{{ $app->handle }}</span></label>@endforeach</div>@error('form.app_ids')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
+            <div class="rounded border border-gray-200 p-4"
+                 x-data="{
+                     lastPathInput: null,
+                     insertKey(key) {
+                         const active = document.activeElement;
+                         let input = active?.matches('[data-condition-path]') ? active : this.lastPathInput;
+                         if (! input?.isConnected) {
+                             input = this.$root.querySelector('[data-condition-path]:placeholder-shown') ?? this.$root.querySelector('[data-condition-path]');
+                         }
+                         if (! input) return;
+                         const start = input.selectionStart ?? input.value.length;
+                         const end = input.selectionEnd ?? input.value.length;
+                         input.value = input.value.slice(0, start) + key + input.value.slice(end);
+                         input.focus();
+                         input.setSelectionRange(start + key.length, start + key.length);
+                         input.dispatchEvent(new Event('input', { bubbles: true }));
+                     },
+                 }"
+                 x-on:focusin="if ($event.target.matches('[data-condition-path]')) lastPathInput = $event.target">
                 <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><h4 class="font-semibold">Koşullar</h4><p class="text-xs text-gray-500">Alan yolu: <code>credit</code> veya <code>subscription.status</code>.</p></div><div class="flex items-center gap-2 text-sm"><span>Mantık</span><select wire:model.defer="form.condition_logic" class="rounded border-gray-300 text-sm"><option value="all">Tümü sağlanmalı (AND)</option><option value="any">Birisi sağlanmalı (OR)</option></select></div></div>
+                @if($appDataKeys !== [])
+                    <div class="mb-4 space-y-3 rounded border border-blue-100 bg-blue-50 p-3">
+                        <p class="text-xs text-gray-600">Kullanılabilir alanlar. Alana tıklayınca imlecin bulunduğu alan yoluna eklenir.</p>
+                        @foreach($appDataKeys as $appId => $summary)
+                            <div wire:key="app-data-keys-{{ $appId }}">
+                                <div class="mb-1 flex flex-wrap items-baseline gap-2 text-sm font-medium">{{ $summary['name'] }}<span class="font-mono text-xs text-gray-400">{{ $summary['handle'] }}</span><span class="text-xs font-normal text-gray-500">son {{ $summary['records'] }} kayıttan</span></div>
+                                @if($summary['keys'] === [])
+                                    <p class="text-xs text-gray-500">Bu uygulama için henüz kayıtlı veri yok.</p>
+                                @else
+                                    <div class="max-h-64 overflow-auto rounded border border-gray-200 bg-white">
+                                        <table class="w-full text-left text-xs">
+                                            <thead class="sticky top-0 bg-gray-50 text-gray-600"><tr><th class="px-2 py-1 font-medium">Alan</th><th class="px-2 py-1 font-medium">Tip</th><th class="px-2 py-1 font-medium">Doluluk</th><th class="px-2 py-1 font-medium">Örnek değerler</th></tr></thead>
+                                            <tbody>
+                                                @foreach($summary['keys'] as $path => $info)
+                                                    <tr class="border-t border-gray-100 hover:bg-blue-50">
+                                                        <td class="px-2 py-1"><button type="button" data-key="{{ $path }}" x-on:mousedown.prevent x-on:click="insertKey($el.dataset.key)" class="font-mono text-blue-700 hover:underline">{{ $path }}</button></td>
+                                                        <td class="px-2 py-1 text-gray-500">{{ implode('/', $info['types']) }}</td>
+                                                        <td class="px-2 py-1 text-gray-500">%{{ round(100 * $info['count'] / $summary['records']) }}</td>
+                                                        <td class="px-2 py-1 font-mono text-gray-700">{{ implode(', ', $info['samples']) }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
                 <div class="space-y-3">
                     @foreach($form['conditions'] as $index => $condition)
                         <div wire:key="condition-{{ $index }}" class="rounded bg-gray-50 p-3">
                             <div class="space-y-2">
                                 <div class="grid gap-2 lg:grid-cols-2 md:grid-cols-4">
-                                    <input wire:model.defer="form.conditions.{{ $index }}.path" class="w-full rounded border-gray-300 text-sm md:col-span-3" placeholder="Alan yolu (örn. credit)">
+                                    <input wire:model.defer="form.conditions.{{ $index }}.path" data-condition-path class="w-full rounded border-gray-300 text-sm md:col-span-3" placeholder="Alan yolu (örn. credit)">
                                     <select wire:model.live="form.conditions.{{ $index }}.value_type" class="w-full rounded border-gray-300 text-sm">
                                         <option value="number">Sayı</option>
                                         <option value="date">Tarih</option>
