@@ -21,11 +21,11 @@ class BrevoService
 
     public function __construct()
     {
-        $this->senderEmailName = env('BREVO_SENDER_EMAIL_NAME');
-        $this->senderEmail = env('BREVO_SENDER_EMAIL');
-        $this->senderNumber = env('BREVO_SENDER_NUMBER');
-        $token = env('BREVO_TOKEN');
-        $url = env('BREVO_URL');
+        $this->senderEmailName = config('services.brevo.sender_email_name');
+        $this->senderEmail = config('services.brevo.sender_email');
+        $this->senderNumber = config('services.brevo.sender_number');
+        $token = config('services.brevo.token');
+        $url = config('services.brevo.url');
         $this->client = new Client([
             "base_uri" => $url,
             'headers' => ['api-key' => $token, 'Accept' => 'application/json'],

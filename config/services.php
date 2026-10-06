@@ -46,6 +46,19 @@ return [
         ],
     ],
 
+    'efatura' => [
+        'url'   => env('EFATURA_URL'),
+        'token' => env('EFATURA_TOKEN'),
+    ],
+
+    'brevo' => [
+        'url'               => env('BREVO_URL'),
+        'token'             => env('BREVO_TOKEN'),
+        'sender_number'     => env('BREVO_SENDER_NUMBER'),
+        'sender_email_name' => env('BREVO_SENDER_EMAIL_NAME'),
+        'sender_email'      => env('BREVO_SENDER_EMAIL'),
+    ],
+
     // Harici API konfigürasyonu shopify_apps tablosunda her uygulama başına
     // ayrı sütunlarda saklanıyor:
     //   api_auth_endpoint, get_access_token_endpoint, auth_email, auth_password.

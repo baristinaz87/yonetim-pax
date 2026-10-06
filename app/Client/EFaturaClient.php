@@ -11,8 +11,8 @@ class EFaturaClient
 
     public function __construct()
     {
-        $token = env('EFATURA_TOKEN');
-        $url = env('EFATURA_URL');
+        $token = config('services.efatura.token');
+        $url = config('services.efatura.url');
         $this->client = new Client([
             "base_uri" => $url,
             'headers' => [
