@@ -103,23 +103,7 @@ class AdminClient
             return null;
         }
 
-        $store->fill([
-            'shop_id'          => (string) ($shop['id'] ?? ''),
-            'name'             => $shop['name'] ?? null,
-            'shop_owner'       => $shop['shop_owner'] ?? null,
-            'email'            => $shop['email'] ?? null,
-            'phone'            => $shop['phone'] ?? null,
-            'address1'         => $shop['address1'] ?? null,
-            'city'             => $shop['city'] ?? null,
-            'zip'              => $shop['zip'] ?? null,
-            'country'          => $shop['country_name'] ?? null,
-            'country_code'     => $shop['country_code'] ?? null,
-            'currency'         => $shop['currency'] ?? null,
-            'plan_name'        => $shop['plan_name'] ?? null,
-            'plan_display_name'=> $shop['plan_display_name'] ?? null,
-            'timezone'         => $shop['iana_timezone'] ?? null,
-            'language'         => $shop['primary_locale'] ?? null,
-        ])->save();
+        $store->fillFromShopPayload($shop)->save();
 
         Log::info("[shopify-admin] {$domain} bilgileri güncellendi");
         return $store;

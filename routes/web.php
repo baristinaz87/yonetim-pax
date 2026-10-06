@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Shopify\WebhookController;
+use App\Http\Middleware\VerifyShopifyWebhook;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleAuthController;
 
@@ -61,6 +62,7 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
 
 // Shopify webhook alıcısı — auth gerektirmez, imza middleware ile doğrulanır.
 Route::post('/webhooks/shopify/{app:handle}', WebhookController::class)
+    ->middleware(VerifyShopifyWebhook::class)
     ->name('shopify.webhook');
 
 require __DIR__.'/auth.php';

@@ -115,19 +115,24 @@ class InstallJob implements ShouldQueue
             return;
         }
 
-        // 3) StoreApp tablosuna token'ı yaz
-        StoreApp::updateOrCreate(
-            [
-                'store_id' => $event->store->id,
-                'app_id'   => $app->id,
-            ],
-            [
+        // 3) StoreApp tablosuna token'ı yaz. Daha yeni bir kurulum/kaldırma
+        //    biliniyorsa (event geçmişe aitse) durum alanlarına dokunma.
+        $installedAt = $event->created_at ?? now();
+        $storeApp    = StoreApp::firstOrNew([
+            'store_id' => $event->store->id,
+            'app_id'   => $app->id,
+        ]);
+
+        if (! $storeApp->exists || ! $storeApp->changedAfter($installedAt)) {
+            $storeApp->fill([
                 'status'         => 'active',
-                'access_token'   => $accessToken,
-                'installed_at'   => $event->created_at ?? now(),
+                'installed_at'   => $installedAt,
                 'uninstalled_at' => null,
-            ],
-        );
+            ]);
+        }
+
+        $storeApp->access_token = $accessToken;
+        $storeApp->save();
 
         Log::info("[install-job] {$domain} → {$app->handle}: access token yazıldı");
 

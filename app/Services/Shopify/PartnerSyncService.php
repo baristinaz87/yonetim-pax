@@ -49,6 +49,7 @@ class PartnerSyncService
 
     public function __construct(
         private readonly AdminClient $admin,
+        private readonly StoreAppEventRecorder $recorder,
     ) {}
 
     /**
@@ -189,15 +190,16 @@ class PartnerSyncService
 
     /**
      * Tek bir event'i veritabanına uygula.
+     *
+     * Webhook ile önceden kaydedilmiş olay yeniden açılmaz; StoreAppEventRecorder
+     * mevcut event'i "partner" kaynağıyla işaretler.
      */
     private function applyEvent(App $app, array $event, int &$processed): void
     {
-        $type      = $event['type'];
         $shop      = $event['shop'] ?? [];
         $domain    = $shop['myshopifyDomain'] ?? null;
-        $shopName  = $shop['name'] ?? null;
         $eventDate = Carbon::parse($event['occurredAt']);
-        $isInstall = $type === 'RELATIONSHIP_INSTALLED';
+        $isInstall = $event['type'] === 'RELATIONSHIP_INSTALLED';
 
         if (! $domain) {
             return;
@@ -206,60 +208,38 @@ class PartnerSyncService
         // Partner API yalnızca domain + name döndürür.
         // Diğer tüm alanlar (email, phone, shop_owner, contact_email, plan vb.)
         // Admin API shop.json'dan ancak access_token varsa çekilebilir.
-        $store = Store::firstOrCreate(
-            ['domain' => $domain],
-            ['name'   => $shopName],
-        );
+        $context = ['shop_name' => $shop['name'] ?? null];
 
-        if ($shopName && ! $store->name) {
-            $store->name = $shopName;
-            $store->save();
-        }
+        $created = $isInstall
+            ? $this->recorder->recordInstall($app, $domain, $eventDate, StoreAppEventRecorder::SOURCE_PARTNER, $context)
+            : $this->recorder->recordUninstall($app, $domain, $eventDate, StoreAppEventRecorder::SOURCE_PARTNER, $context);
 
-        $storeApp = StoreApp::updateOrCreate(
-            [
-                'store_id' => $store->id,
-                'app_id'   => $app->id,
-            ],
-            $isInstall
-                ? [
-                    'status'        => 'active',
-                    'installed_at'  => $eventDate,
-                    'uninstalled_at'=> null,
-                ]
-                : [
-                    'status'        => 'uninstalled',
-                    'uninstalled_at'=> $eventDate,
-                ],
-        );
-
-        // Kurulum event'inde mağaza detaylarını Admin API'den çekmeyi dene.
-        // Token yoksa sessizce atla — webhook geldiğinde tekrar denenecek.
-        if ($isInstall && $storeApp->access_token && (! $store->email || ! $store->phone)) {
-            try {
-                $this->admin->fetchAndUpdateStoreDetails($domain, $storeApp->access_token);
-            } catch (\Throwable $e) {
-                Log::warning("[sync] {$domain} zenginleştirme atlandı: ".$e->getMessage());
-            }
-        }
-
-        // Duplikasyon kontrolü
-        $alreadyExists = Event::query()
-            ->where('store_id', $store->id)
-            ->where('app_id', $app->id)
-            ->where('type', $isInstall ? 'installed' : 'uninstalled')
-            ->where('created_at', $eventDate)
-            ->exists();
-
-        if (! $alreadyExists) {
-            Event::create([
-                'store_id'   => $store->id,
-                'app_id'     => $app->id,
-                'type'       => $isInstall ? 'installed' : 'uninstalled',
-                'label'      => ($isInstall ? 'Uygulama kuruldu' : 'Uygulama kaldırıldı')." ({$app->name})",
-                'created_at' => $eventDate,
-            ]);
+        if ($created) {
             $processed++;
+        }
+
+        if ($isInstall) {
+            $this->enrichStore($app, $domain);
+        }
+    }
+
+    /**
+     * Mağaza detaylarını Admin API'den çekmeyi dene.
+     * Token yoksa sessizce atla — webhook ya da InstallJob tamamlar.
+     */
+    private function enrichStore(App $app, string $domain): void
+    {
+        $store    = Store::where('domain', $domain)->first();
+        $storeApp = $store?->apps()->where('app_id', $app->id)->first();
+
+        if (! $storeApp?->access_token || $storeApp->status !== 'active' || ($store->email && $store->phone)) {
+            return;
+        }
+
+        try {
+            $this->admin->fetchAndUpdateStoreDetails($domain, $storeApp->access_token);
+        } catch (\Throwable $e) {
+            Log::warning("[sync] {$domain} zenginleştirme atlandı: ".$e->getMessage());
         }
     }
 }

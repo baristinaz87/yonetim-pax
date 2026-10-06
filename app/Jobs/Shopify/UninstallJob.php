@@ -52,6 +52,18 @@ class UninstallJob implements ShouldQueue
 
         Log::info("[uninstall-job] başladı: app={$app->handle}, store={$domain}, event_id={$event->id}");
 
+        // Partner API eski bir kaldırmayı, sonraki yeniden kurulumdan sonra bildirebilir;
+        // o durumda güncel kurulumun token'ı silinmemeli.
+        $storeApp = StoreApp::query()
+            ->where('store_id', $event->store->id)
+            ->where('app_id', $app->id)
+            ->first();
+
+        if ($storeApp?->changedAfter($event->created_at)) {
+            Log::info("[uninstall-job] atlandı: {$domain} → {$app->handle} için daha yeni bir kurulum/kaldırma kayıtlı (event_id={$event->id})");
+            return;
+        }
+
         $updated = StoreApp::query()
             ->where('store_id', $event->store->id)
             ->where('app_id', $app->id)

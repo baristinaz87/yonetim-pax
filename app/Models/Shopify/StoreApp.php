@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Shopify;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,5 +39,19 @@ class StoreApp extends Model
     public function app(): BelongsTo
     {
         return $this->belongsTo(App::class, 'app_id');
+    }
+
+    /**
+     * Kayıttaki son durum değişikliği (kurulum ya da kaldırma) verilen andan sonra mı?
+     *
+     * Webhook ve Partner API olayları sıra dışı bildirebilir (ör. eski bir kaldırma,
+     * sonraki yeniden kurulumdan sonra gelir). true ise o andaki olay geçmişe aittir
+     * ve güncel durumu/token'ı ezmemelidir.
+     */
+    public function changedAfter(CarbonInterface $at): bool
+    {
+        $lastChangeAt = $this->status === 'active' ? $this->installed_at : $this->uninstalled_at;
+
+        return $lastChangeAt !== null && $lastChangeAt->gt($at);
     }
 }

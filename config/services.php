@@ -64,9 +64,9 @@ return [
             'api_version' => env('SHOPIFY_API_VERSION', '2026-04'),
         ],
         'webhook' => [
-            // Üretimde Shopify'dan gelen isteğin HMAC'ini doğrulamak için
-            // uygulama başına paylaşılan gizli anahtar.
-            'verify_hmac' => env('SHOPIFY_WEBHOOK_VERIFY_HMAC', false),
+            // Webhook gövdesinin HMAC imzası uygulamanın client_secret'ı ile doğrulanır
+            // (VerifyShopifyWebhook). Yalnızca yerel geliştirmede false yapın.
+            'verify_hmac' => env('SHOPIFY_WEBHOOK_VERIFY_HMAC', true),
         ],
     ],
 
