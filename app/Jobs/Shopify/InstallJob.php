@@ -34,8 +34,7 @@ use Illuminate\Support\Facades\Log;
  *   - Token veya shop.json alınamazsa ya da API hata verirse job
  *     1, 2, 5, 10, 15 dk arayla toplam 6 kez denenir.
  *   - Deneme hakkı bitince flow transaction'lar yine de açılır;
- *     iletişim bilgisi yoksa transaction 'failed' olur ve panelden
- *     tekrar denenebilir.
+ *     iletişim bilgisi olmayan kanal için transaction açılmaz.
  *   - `sync` kuyrukta release çalışmadığı için yeniden deneme yapılmaz.
  */
 class InstallJob implements ShouldQueue
