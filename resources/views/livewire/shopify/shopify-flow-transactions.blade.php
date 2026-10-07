@@ -40,6 +40,59 @@
         </div>
     </div>
 
+    <div class="flex flex-wrap items-center gap-3 mx-2 mb-4">
+        @if(!$storeId && $storeDomain === null)
+            <input
+                wire:model.live.debounce.400ms="shopSearch"
+                type="text"
+                class="w-60 border-gray-300 rounded-md text-sm"
+                placeholder="Mağaza ara..."
+            >
+        @endif
+
+        <input
+            wire:model.live.debounce.400ms="targetSearch"
+            type="text"
+            class="w-72 border-gray-300 rounded-md text-sm"
+            placeholder="E-posta veya telefon ara..."
+        >
+
+        <select wire:model.live="flowFilter" class="border-gray-300 rounded-md text-sm">
+            <option value="">Tüm Flow'lar</option>
+            @foreach($flows as $id => $name)
+                <option value="{{ $id }}">{{ $name }} (#{{ $id }})</option>
+            @endforeach
+        </select>
+
+        <select wire:model.live="eventTypeFilter" class="border-gray-300 rounded-md text-sm">
+            <option value="">Tüm Event'ler</option>
+            @foreach($eventTypes as $handle => $name)
+                <option value="{{ $handle }}">{{ $name }}</option>
+            @endforeach
+        </select>
+
+        <select wire:model.live="channelFilter" class="border-gray-300 rounded-md text-sm">
+            <option value="">Tüm Kanallar</option>
+            @foreach($channels as $value => $label)
+                <option value="{{ $value }}">{{ $label }}</option>
+            @endforeach
+        </select>
+
+        @if($status !== '' || $targetSearch !== '' || $shopSearch !== '' || $flowFilter !== '' || $eventTypeFilter !== '' || $channelFilter !== '')
+            <button
+                type="button"
+                wire:click="resetFilters"
+                class="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:underline"
+            >
+                Filtreleri Temizle
+            </button>
+        @endif
+
+        <span class="ml-auto text-sm text-gray-500">
+            {{ $transactions->total() }} kayıt
+        </span>
+    </div>
+
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-500">
 
