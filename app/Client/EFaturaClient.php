@@ -255,4 +255,21 @@ class EFaturaClient
             dd($e->getMessage());
         }
     }
+
+    /**
+     * Mağazanın hediye kontör yükleme geçmişini (gift_credit_topup_history) döner.
+     * Her satır bir hareket: type=grant (aylık yükleme) veya type=clear (plan dışı sıfırlama).
+     */
+    public function getMerchantGiftCreditTopups(string $id, int $page, int $perPage): array
+    {
+        try {
+            $query = ["page" => $page, "per_page" => $perPage, "sort" => "-created_at"];
+            $response = $this->client->get('/api/merchant/'.$id.'/gift-credit-topups?'.http_build_query($query));
+            $content = $response->getBody()->getContents();
+            return json_decode($content, true);
+        } catch (GuzzleException $e) {
+            //TODO
+            dd($e->getMessage());
+        }
+    }
 }

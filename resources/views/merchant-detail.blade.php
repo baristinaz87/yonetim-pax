@@ -7,12 +7,14 @@
     <div class="max-w-[1600px] mx-auto sm:px-6 lg:px-8">
         <div class="p-6 text-gray-900">
             <livewire:merchant-detail-form :id="request('id')" />
-            <livewire:merchant-charges-table :id="request('id')" />
             <livewire:merchant-notes-table :id="request('id')" />
+            {{-- Geçmiş tabloları: mağazaya ait kayıt yoksa her biri kendi içinde gizlenir. --}}
+            <livewire:merchant-gift-credit-topups-table :id="request('id')" />
+            <livewire:merchant-charges-table :id="request('id')" />
             <livewire:merchant-other-invoices-table :id="request('id')" />
             <livewire:notification-log-table :id="request('id')" />
             <div class="m-6">
-                <livewire:shopify.shopify-flow-transactions :merchant-id="(int) request('id')" />
+                <livewire:shopify.shopify-flow-transactions :id="(int) request('id')" :hide-when-empty="true" />
             </div>
         </div>
     </div>

@@ -45,13 +45,25 @@ class ShopifyFlowTransactions extends Component
     public ?int $appId = null;
     public ?string $storeDomain = null;
 
-    public function mount(?int $storeId = null, ?int $appId = null, ?int $merchantId = null): void
+    /**
+     * true ise kapsamdaki (mağaza/uygulama) hiç kayıt yoksa bileşen hiç render edilmez.
+     * Müşteri detay sayfasında kullanılır; filtreler hesaba katılmaz.
+     */
+    public bool $hideWhenEmpty = false;
+
+    /**
+     * @param int|null $id EFatura merchant id. Müşteri detayındaki diğer bileşenlerle
+     *                     tutarlı olsun diye `:id` olarak geçilir; mağaza/uygulama
+     *                     sayfaları ise `:store-id` / `:app-id` kullanır.
+     */
+    public function mount(?int $storeId = null, ?int $appId = null, ?int $id = null, bool $hideWhenEmpty = false): void
     {
         $this->storeId = $storeId;
         $this->appId = $appId;
+        $this->hideWhenEmpty = $hideWhenEmpty;
 
-        if ($merchantId) {
-            $this->storeDomain = $this->resolveMerchantDomain($merchantId);
+        if ($id) {
+            $this->storeDomain = $this->resolveMerchantDomain($id);
         }
     }
 
@@ -87,8 +99,7 @@ class ShopifyFlowTransactions extends Component
 
     public function render(): View
     {
-        $transactions = FlowTransaction::query()
-            ->with(['flow', 'event.store'])
+        $scopedQuery = FlowTransaction::query()
             ->when(
                 $this->storeId,
                 fn ($query) => $query->whereHas('event', fn ($query) => $query->where('store_id', $this->storeId))
@@ -100,7 +111,14 @@ class ShopifyFlowTransactions extends Component
             ->when(
                 $this->appId,
                 fn ($query) => $query->whereHas('event', fn ($query) => $query->where('app_id', $this->appId))
-            )
+            );
+
+        if ($this->hideWhenEmpty && !(clone $scopedQuery)->exists()) {
+            return view('livewire.shopify.shopify-flow-transactions', ['visible' => false]);
+        }
+
+        $transactions = $scopedQuery
+            ->with(['flow', 'event.store'])
             ->when(
                 $this->status !== '',
                 fn ($query) => $query->where('status', $this->status)
@@ -132,6 +150,7 @@ class ShopifyFlowTransactions extends Component
             ->paginate($this->perPage);
 
         return view('livewire.shopify.shopify-flow-transactions', [
+            'visible' => true,
             'transactions' => $transactions,
             'wpTemplateNamesById' => WpContent::query()
                 ->pluck('name', 'brevo_template_id')

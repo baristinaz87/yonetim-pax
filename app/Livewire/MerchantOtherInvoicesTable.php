@@ -65,6 +65,10 @@ class MerchantOtherInvoicesTable extends Component
         );
 
         $data["total_records"] = $data["total"] ?? 0;
+        // Filtre yokken hiç kayıt yoksa bölüm gizlenir. Filtre aktifken boş sonuç gelse de
+        // bölüm açık kalır; aksi halde kullanıcı filtreyi temizleyemez.
+        $hasActiveFilter = $this->selectedSource !== null || !empty($this->startDate) || !empty($this->endDate);
+        $data["show_section"] = $hasActiveFilter || $data["total_records"] > 0;
         $data["source_counts"] = [
             "all" => $data["total"] ?? 0,
             "coming" => 0,
