@@ -108,6 +108,24 @@ class BrevoService
         }
     }
 
+    public function updateWhatsappContactAttributes(string $whatsapp, array $attributes): bool
+    {
+        if ($attributes === []) {
+            return true;
+        }
+
+        try {
+            $response = $this->client->put('/v3/contacts/'.rawurlencode($whatsapp), [
+                'query' => ['identifierType' => 'whatsapp_id'],
+                'json' => ['attributes' => $attributes],
+            ]);
+
+            return $response->getStatusCode() === 204;
+        } catch (GuzzleException $e) {
+            throw new RuntimeException($e->getMessage(), previous: $e);
+        }
+    }
+
     private function recipients(string $toName, array $emails): array
     {
         return array_map(function ($email) use ($toName) {

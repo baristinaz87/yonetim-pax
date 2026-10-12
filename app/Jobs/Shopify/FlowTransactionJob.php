@@ -3,7 +3,9 @@
 namespace App\Jobs\Shopify;
 
 use App\Constant\ProviderTypeConstant;
+use App\Models\Shopify\Event;
 use App\Models\Shopify\FlowTransaction;
+use App\Models\Shopify\StoreAppData;
 use App\Services\BrevoService;
 use App\Services\Shopify\FlowRecipientResolver;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -58,6 +60,11 @@ class FlowTransactionJob implements ShouldQueue
             return ["status" => false, "message" => "Geçerli telefon numarası bulunamadı.", "result" => []];
         }
 
+        foreach ($phones as $phone) {
+            $attributes = $this->getAttributesOnEvent($event);
+            $brevo->updateWhatsappContactAttributes($phone, $attributes);
+        }
+
         $response = $brevo->sendTemplateMessage($phones, $flowTransaction->template_id);
         if (empty($response['messageId'])) {
             return ["status" => false, "message" => "İleti gönderilirken problem oluştu.", "result" => $response];
@@ -91,6 +98,31 @@ class FlowTransactionJob implements ShouldQueue
         } else {
             return ["status" => true, "message" => "İleti gönderildi.", "result" => $response];
         }
+    }
+
+    private function getAttributesOnEvent(Event $event): array
+    {
+        $attributes = [];
+        $store = $event->store;
+
+        $shopName = $store?->name ?: $store?->domain;
+        if (is_string($shopName) && $shopName !== '') $attributes['SHOP_NAME'] = $shopName;
+        if (!$event->store_id || !$event->app_id) return $attributes;
+
+        $data = StoreAppData::query()
+            ->where('store_id', $event->store_id)
+            ->where('app_id', $event->app_id)
+            ->value('data');
+
+        if (!is_array($data)) return $attributes;
+
+        $credit = $data['credit'] ?? null;
+        if (is_numeric($credit)) $attributes['CREDIT'] = $credit + 0;
+
+        $creditExpiredAt = $data['credit_expired_at'] ?? null;
+        if ($creditExpiredAt !== null) $attributes['CREDIT_EXPIRED_AT'] = $creditExpiredAt;
+
+        return $attributes;
     }
 
     /**
