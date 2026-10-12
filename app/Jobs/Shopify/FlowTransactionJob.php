@@ -116,7 +116,7 @@ class FlowTransactionJob implements ShouldQueue
 
         if (!is_array($data)) return $attributes;
 
-        $credit = $data['credit'] ?? null;
+        $credit = $data['total_credit'] ?? null;
         if (is_numeric($credit)) $attributes['CREDIT'] = $credit + 0;
 
         $creditExpiredAt = $data['credit_expired_at'] ?? null;
