@@ -60,9 +60,9 @@ class FlowTransactionJob implements ShouldQueue
             return ["status" => false, "message" => "Geçerli telefon numarası bulunamadı.", "result" => []];
         }
 
+        $attributes = $this->getAttributesOnEvent($event);
         foreach ($phones as $phone) {
-            $attributes = $this->getAttributesOnEvent($event);
-            $brevo->updateWhatsappContactAttributes($phone, $attributes);
+            $brevo->upsertWhatsappContactAttributes($phone, $attributes);
         }
 
         $response = $brevo->sendTemplateMessage($phones, $flowTransaction->template_id);

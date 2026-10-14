@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\EmailContent;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use RuntimeException;
 
@@ -108,7 +109,16 @@ class BrevoService
         }
     }
 
-    public function updateWhatsappContactAttributes(string $whatsapp, array $attributes): bool
+    /**
+     * WhatsApp numarasına bağlı Brevo kişisinin özniteliklerini günceller;
+     * kişi yoksa (404) aynı özniteliklerle oluşturur.
+     *
+     * Şablon gönderimi kişinin var olmasını gerektirmez; öznitelikler yalnızca
+     * şablondaki yer tutucuların (SHOP_NAME, CREDIT vb.) dolması için yazılır.
+     *
+     * @param array<string, mixed> $attributes  Brevo'da tanımlı, büyük harfli öznitelik adları
+     */
+    public function upsertWhatsappContactAttributes(string $whatsapp, array $attributes): bool
     {
         if ($attributes === []) {
             return true;
@@ -121,6 +131,40 @@ class BrevoService
             ]);
 
             return $response->getStatusCode() === 204;
+        } catch (ClientException $e) {
+            // Brevo: {"code":"document_not_found","message":"Contact does not exist"}
+            if ($e->getResponse()->getStatusCode() !== 404) {
+                throw new RuntimeException($e->getMessage(), previous: $e);
+            }
+        } catch (GuzzleException $e) {
+            throw new RuntimeException($e->getMessage(), previous: $e);
+        }
+
+        return $this->createWhatsappContact($whatsapp, $attributes);
+    }
+
+    /**
+     * WhatsApp numarasıyla yeni Brevo kişisi oluşturur.
+     *
+     * Brevo kişi oluştururken e-posta, ext_id veya SMS'ten birini ister; e-posta
+     * mağazaya ait olup birden çok numara taşıyabileceğinden kimlik olarak
+     * numaranın kendisi ext_id'ye yazılır. updateEnabled ile aynı ext_id'li
+     * kişi varsa oluşturmak yerine güncellenir (201 oluşturuldu / 204 güncellendi).
+     *
+     * @param array<string, mixed> $attributes
+     */
+    public function createWhatsappContact(string $whatsapp, array $attributes): bool
+    {
+        try {
+            $response = $this->client->post('/v3/contacts', [
+                'json' => [
+                    'ext_id'        => $whatsapp,
+                    'attributes'    => ['WHATSAPP' => $whatsapp] + $attributes,
+                    'updateEnabled' => true,
+                ],
+            ]);
+
+            return in_array($response->getStatusCode(), [201, 204], true);
         } catch (GuzzleException $e) {
             throw new RuntimeException($e->getMessage(), previous: $e);
         }
