@@ -12,7 +12,7 @@
                 Events
             </h3>
             <p class="text-xs text-gray-500 mt-0.5">
-                Mağazalardaki uygulama kurulum/kaldırma olayları (install / uninstall).
+                Mağazalardaki uygulama olayları (kurulum / kaldırma / event generator).
             </p>
         </div>
 
@@ -54,17 +54,24 @@
             <ul class="divide-y divide-gray-100">
                 @foreach($events as $event)
                     @php
-                        $isInstall = $event->type === 'installed';
-                        $rowBg     = $isInstall
+                        $isInstall   = $event->type === \App\Constant\ShopifyEventTypeConstant::INSTALLED;
+                        $isUninstall = $event->type === \App\Constant\ShopifyEventTypeConstant::UNINSTALLED;
+                        $typeLabel   = \App\Constant\ShopifyEventTypeConstant::label($event->type);
+
+                        $rowBg = $isInstall
                             ? 'bg-gradient-to-r from-green-50/70 via-white to-white hover:from-green-50'
-                            : 'bg-gradient-to-r from-red-50/70 via-white to-white hover:from-red-50';
+                            : ($isUninstall
+                                ? 'bg-gradient-to-r from-red-50/70 via-white to-white hover:from-red-50'
+                                : 'bg-gradient-to-r from-amber-50/70 via-white to-white hover:from-amber-50');
 
                         $badgeClasses = $isInstall
                             ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-red-100 text-red-800 border-red-200';
+                            : ($isUninstall
+                                ? 'bg-red-100 text-red-800 border-red-200'
+                                : 'bg-amber-100 text-amber-800 border-amber-200');
 
-                        $dotClasses = $isInstall ? 'bg-green-500' : 'bg-red-500';
-                        $dotRing   = $isInstall ? 'ring-green-200' : 'ring-red-200';
+                        $dotClasses = $isInstall ? 'bg-green-500' : ($isUninstall ? 'bg-red-500' : 'bg-amber-500');
+                        $dotRing    = $isInstall ? 'ring-green-200' : ($isUninstall ? 'ring-red-200' : 'ring-amber-200');
                     @endphp
 
                     <li class="flex flex-wrap items-center gap-3 px-4 py-3 {{ $rowBg }} transition-colors">
@@ -99,7 +106,7 @@
                         <div class="flex items-center gap-2 shrink-0">
                             <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border {{ $badgeClasses }}">
                                 <span class="w-1.5 h-1.5 rounded-full {{ $dotClasses }} ring-4 {{ $dotRing }}"></span>
-                                {{ $isInstall ? 'KURULDU' : 'KALDIRILDI' }}
+                                {{ $isInstall ? 'KURULDU' : ($isUninstall ? 'KALDIRILDI' : $typeLabel) }}
                             </span>
                         </div>
 

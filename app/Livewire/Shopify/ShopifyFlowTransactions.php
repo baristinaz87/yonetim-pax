@@ -6,6 +6,7 @@ namespace App\Livewire\Shopify;
 
 use App\Client\EFaturaClient;
 use App\Constant\ProviderTypeConstant;
+use App\Constant\ShopifyEventTypeConstant;
 use App\Models\EmailContent;
 use App\Models\WpContent;
 use App\Models\Shopify\EventGenerator;
@@ -160,8 +161,7 @@ class ShopifyFlowTransactions extends Component
                 ->all(),
             'flows' => Flow::query()->orderBy('name')->pluck('name', 'id')->all(),
             'eventTypes' => [
-                'installed' => 'Kuruldu',
-                'uninstalled' => 'Kaldırıldı',
+                ...ShopifyEventTypeConstant::labels(),
                 ...EventGenerator::query()->orderBy('name')->pluck('name', 'handle')->all(),
             ],
             'channels' => [

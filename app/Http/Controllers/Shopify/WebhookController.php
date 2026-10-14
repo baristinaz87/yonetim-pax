@@ -6,31 +6,42 @@ namespace App\Http\Controllers\Shopify;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shopify\App;
+use App\Models\Shopify\Store;
+use App\Models\Shopify\StoreAppData;
 use App\Services\Shopify\StoreAppEventRecorder;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
- * Uygulamaların (efatura vb.) kurulum / kaldırma anında gönderdiği bildirimlerin alıcısı.
- * Partner API olayları geç verebildiği için mağaza, kurulumdan saniyeler sonra
- * buradan öğrenilir; Partner sync aynı olayı sonra getirince yeni event açılmaz.
+ * Uygulamaların (efatura vb.) mağaza olaylarını anında bildirdiği alıcı.
+ *
+ * Kurulum / kaldırma: Partner API olayları geç verebildiği için mağaza, kurulumdan
+ * saniyeler sonra buradan öğrenilir; Partner sync aynı olayı sonra getirince yeni event açılmaz.
  *
  * POST /webhooks/shopify/{app:handle}
  * Headers:
- *   X-Shopify-Topic: app/installed | app/uninstalled
+ *   X-Shopify-Topic: app/installed | app/uninstalled | app_data/update
  *   X-Shopify-Hmac-Sha256: base64(hmac_sha256(ham gövde, app.client_secret))
- * Body: { shop_domain, occurred_at?, access_token?, shop? }
- *   occurred_at  → olay anı (ISO 8601); yoksa istek anı
- *   access_token → mağazanın Shopify access token'ı (yalnızca app/installed)
- *   shop         → Admin API shop.json içeriği (yalnızca app/installed)
+ * Body: { shop_domain, occurred_at?, ... }
+ *   occurred_at     → olay anı (ISO 8601); yoksa istek anı
+ *   app/installed   : access_token? (mağazanın Shopify access token'ı), shop? (Admin API shop.json)
+ *   app_data/update : data {anahtar: değer} → mağazanın shopify_store_app_data kaydında yalnızca
+ *                     bu anahtarlar güncellenir, diğer veriler korunur. Kalıcı kaynak periyodik
+ *                     shopify:update-app-shop-data senkronudur; bu bildirim event generator'ların
+ *                     (ör. efatura renew_credit_failed koşulu) durumu senkronu beklemeden görmesini sağlar.
  *
  * Ağır işler (token/app data/shop.json çekimi, flow'lar) yeni event'in
  * observer'ı üzerinden kuyruktaki InstallJob / UninstallJob'da yapılır.
  */
 class WebhookController extends Controller
 {
+    public const TOPIC_APP_INSTALLED   = 'app/installed';
+    public const TOPIC_APP_UNINSTALLED = 'app/uninstalled';
+    public const TOPIC_APP_DATA_UPDATE = 'app_data/update';
+
     /** Gönderen sunucunun saati ileride olabilir; bundan ilerideki olay zamanı kabul edilmez. */
     private const MAX_CLOCK_SKEW_MINUTES = 5;
 
@@ -53,17 +64,18 @@ class WebhookController extends Controller
         $occurredAt = $this->parseOccurredAt($request->input('occurred_at'));
 
         try {
-            match ($topic) {
-                'app/installed'   => $this->handleInstalled($app, $domain, $occurredAt, $request),
-                'app/uninstalled' => $this->handleUninstalled($app, $domain, $occurredAt),
-                default           => Log::info("[webhook] unhandled topic: {$topic}"),
+            $response = match ($topic) {
+                self::TOPIC_APP_INSTALLED   => $this->handleInstalled($app, $domain, $occurredAt, $request),
+                self::TOPIC_APP_UNINSTALLED => $this->handleUninstalled($app, $domain, $occurredAt),
+                self::TOPIC_APP_DATA_UPDATE => $this->handleAppDataUpdate($app, $domain, $request),
+                default                     => Log::info("[webhook] unhandled topic: {$topic}"),
             };
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error("[webhook] error ({$topic}, {$domain}): ".$e->getMessage());
             return response()->json(['error' => 'Internal error'], 500);
         }
 
-        return response()->json(['ok' => true]);
+        return $response instanceof JsonResponse ? $response : response()->json(['ok' => true]);
     }
 
     private function handleInstalled(App $app, string $domain, Carbon $occurredAt, Request $request): void
@@ -90,6 +102,36 @@ class WebhookController extends Controller
             .($event ? "(yeni event_id={$event->id})" : '(zaten kayıtlı)'));
     }
 
+    /**
+     * Uygulamanın gönderdiği anahtarları mağazanın app data kaydına işler; diğer anahtarlar korunur.
+     * Mağaza yonetim'de yoksa kayıt açılmaz (event generator'lar zaten yalnızca aktif
+     * mağaza-uygulama kayıtlarını değerlendirir) ve 404 döner.
+     *
+     * @return JsonResponse|null Hata yanıtı; başarılıysa null (standart ok yanıtı döner)
+     * @throws Throwable
+     */
+    private function handleAppDataUpdate(App $app, string $domain, Request $request): ?JsonResponse
+    {
+        $data = $request->input('data');
+
+        if (! is_array($data) || $data === [] || array_is_list($data)) {
+            return response()->json(['error' => 'data must be a non-empty object'], 422);
+        }
+
+        $store = Store::query()->where('domain', $domain)->first();
+
+        if (! $store) {
+            Log::warning("[webhook] app_data/update: mağaza bulunamadı: {$domain} ({$app->handle})");
+            return response()->json(['error' => 'Unknown store'], 404);
+        }
+
+        StoreAppData::mergeFor($store, $app, $data);
+
+        Log::info("[webhook] app_data/update: {$domain} → {$app->handle} (".implode(', ', array_keys($data)).')');
+
+        return null;
+    }
+
     private function parseOccurredAt(mixed $value): Carbon
     {
         $now = Carbon::now();
@@ -100,7 +142,7 @@ class WebhookController extends Controller
 
         try {
             $at = Carbon::parse($value);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return $now;
         }
 
