@@ -105,9 +105,9 @@
                 </div>
             </th>
             <th scope="col" class="px-6 py-3">
-                <div class="flex items-center {{ $sortField == "setting_credit" ? "active" : "" }}">
+                <div class="flex items-center {{ $sortField == "setting_total_credit" ? "active" : "" }}">
                     Kalan Kontör
-                    <div wire:click="setSort('setting_credit')" class="px-2 cursor-pointer">
+                    <div wire:click="setSort('setting_total_credit')" class="px-2 cursor-pointer">
                         <svg class="w-4 h-4 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 15 4 4 4-4m0-6-4-4-4 4"></path>
                         </svg>
@@ -233,7 +233,8 @@
                     {{ !empty($merchant['credit_expired_at']) ? Carbon::parse($merchant['credit_expired_at'])->format('d/m/Y') : '' }}
                 </td>
                 <td class="px-6 py-4">
-                    {{ $merchant['credit'] ?? '' }}
+                    {{-- Normal + hediye kontör; efatura /api/merchants her satıra total_credit ekler --}}
+                    {{ $merchant['total_credit'] ?? '' }}
                 </td>
                 <td class="px-6 py-4">
                     <span class="{{ $colors[$merchant["status"] ?? ""] ?? "bg-gray-300" }} text-white p-2 rounded">
