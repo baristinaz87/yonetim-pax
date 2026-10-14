@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Shopify;
 
 use App\Constant\ProviderTypeConstant;
+use App\Constant\ShopifyEventTypeConstant;
 use App\Models\EmailContent;
 use App\Models\WpContent;
 use App\Models\Shopify\App;
@@ -186,8 +187,7 @@ class ShopifyFlowsTable extends Component
     private function availableEventTypes(): array
     {
         return [
-            'installed' => 'Kuruldu',
-            'uninstalled' => 'Kaldırıldı',
+            ...ShopifyEventTypeConstant::labels(),
             ...EventGenerator::query()->active()->orderBy('name')->pluck('name', 'handle')->all(),
         ];
     }
@@ -195,7 +195,8 @@ class ShopifyFlowsTable extends Component
     /** @return array<int, int>|null Null means every application is allowed. */
     private function appIdsForEventType(string $eventType): ?array
     {
-        if (in_array($eventType, ['installed', 'uninstalled'], true)) {
+        // Sabit tipler (kuruldu / kaldırıldı / kontör yükleme hatası) her uygulama için seçilebilir.
+        if (ShopifyEventTypeConstant::isBuiltIn($eventType)) {
             return null;
         }
 

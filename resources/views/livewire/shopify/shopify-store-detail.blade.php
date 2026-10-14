@@ -196,9 +196,14 @@
             <div class="space-y-2">
                 @foreach($events as $event)
                     @php
-                        $isInstall = $event->type === 'installed';
+                        $isInstall   = $event->type === \App\Constant\ShopifyEventTypeConstant::INSTALLED;
+                        $isUninstall = $event->type === \App\Constant\ShopifyEventTypeConstant::UNINSTALLED;
+                        $typeLabel   = \App\Constant\ShopifyEventTypeConstant::label($event->type);
+                        $boxClasses  = $isInstall ? 'bg-green-50 border-green-200' : ($isUninstall ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200');
+                        $linkClasses = $isInstall ? 'text-green-900 hover:text-green-700' : ($isUninstall ? 'text-red-900 hover:text-red-700' : 'text-amber-900 hover:text-amber-700');
+                        $textClasses = $isInstall ? 'text-green-800' : ($isUninstall ? 'text-red-800' : 'text-amber-800');
                     @endphp
-                    <div class="flex items-start gap-3 rounded-lg p-3 border {{ $isInstall ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200' }}">
+                    <div class="flex items-start gap-3 rounded-lg p-3 border {{ $boxClasses }}">
                         <div class="flex-shrink-0 mt-1">
                             @if($isInstall)
                                 <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
@@ -206,10 +211,16 @@
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                     </svg>
                                 </div>
-                            @else
+                            @elseif($isUninstall)
                                 <div class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                            @else
+                                <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                                     </svg>
                                 </div>
                             @endif
@@ -228,13 +239,13 @@
                                     @endif
                                     <a href="{{ route('shopify.apps.show', $event->app->id) }}"
                                        wire:navigate
-                                       class="text-sm font-semibold {{ $isInstall ? 'text-green-900 hover:text-green-700' : 'text-red-900 hover:text-red-700' }} hover:underline">
+                                       class="text-sm font-semibold {{ $linkClasses }} hover:underline">
                                         {{ $event->app->name }}
                                     </a>
                                 </div>
                             @endif
-                            <p class="text-sm {{ $isInstall ? 'text-green-800' : 'text-red-800' }} mt-1">
-                                <strong>{{ $isInstall ? 'KURULDU' : 'KALDIRILDI' }}</strong>
+                            <p class="text-sm {{ $textClasses }} mt-1">
+                                <strong>{{ $isInstall ? 'KURULDU' : ($isUninstall ? 'KALDIRILDI' : $typeLabel) }}</strong>
                                 @if($event->label)
                                     · <span class="text-xs text-gray-600">{{ $event->label }}</span>
                                 @endif

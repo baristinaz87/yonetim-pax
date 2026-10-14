@@ -7,6 +7,7 @@ namespace App\Models\Shopify;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Bir mağaza × uygulama ikilisi için uygulamanın topladığı
@@ -49,6 +50,38 @@ class StoreAppData extends Model
     /* -----------------------------------------------------------------
      |  Yardımcı metodlar
      | ----------------------------------------------------------------- */
+
+    /**
+     * Verilen anahtarları mağaza × uygulama kaydının verisine ekler/günceller;
+     * diğer anahtarlara dokunmaz. Kayıt yoksa yalnızca bu anahtarlarla açılır,
+     * kalanını periyodik senkron (shopify:update-app-shop-data) doldurur.
+     *
+     * Event generator'ların "Veri Tazeliği" kontrolü updated_at'e baktığı için
+     * veri aynı olsa bile zaman damgası tazelenir.
+     *
+     * @param array<string, mixed> $data
+     * @throws \Throwable
+     */
+    public static function mergeFor(Store $store, App $app, array $data): self
+    {
+        return DB::transaction(function () use ($store, $app, $data): self {
+            $row = self::query()
+                ->where('store_id', $store->id)
+                ->where('app_id', $app->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $row) {
+                $row = new self(['store_id' => $store->id, 'app_id' => $app->id]);
+            }
+
+            $row->data = array_merge(is_array($row->data) ? $row->data : [], $data);
+            $row->updated_at = now();
+            $row->save();
+
+            return $row;
+        });
+    }
 
     /**
      * JSON içinden değer oku (dot-notation destekli).

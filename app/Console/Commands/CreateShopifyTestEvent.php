@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Constant\ShopifyEventTypeConstant;
 use App\Models\Shopify\App;
 use App\Models\Shopify\Event;
 use App\Models\Shopify\Store;
@@ -29,19 +30,19 @@ class CreateShopifyTestEvent extends Command
             return self::FAILURE;
         }
 
-        if (! in_array($type, ['installed', 'uninstalled'], true)) {
-            $this->error('Type sadece installed veya uninstalled olabilir.');
+        if (! ShopifyEventTypeConstant::isBuiltIn($type)) {
+            $this->error('Type sadece '.implode(', ', ShopifyEventTypeConstant::all()).' olabilir.');
             return self::FAILURE;
         }
 
         $app = App::findOrFail($appId);
         $store = Store::findOrFail($storeId);
 
-        Event::create([
+        $event = Event::create([
             'store_id'   => $store->id,
             'app_id'     => $app->id,
             'type'       => $type,
-            'label'      => 'Test event',
+            'label'      => 'Test event ('.ShopifyEventTypeConstant::label($type).')',
             'data'       => [
                 'source' => 'create_test_event_job',
                 'app'    => $app->handle,
@@ -49,6 +50,8 @@ class CreateShopifyTestEvent extends Command
             ],
             'created_at' => now(),
         ]);
+
+        $this->info("Event oluşturuldu: id={$event->id}, type={$type}, store={$store->domain}, app={$app->handle}");
 
         return self::SUCCESS;
     }

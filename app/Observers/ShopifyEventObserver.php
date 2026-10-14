@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
+use App\Constant\ShopifyEventTypeConstant;
 use App\Jobs\Shopify\InstallJob;
 use App\Jobs\Shopify\UninstallJob;
 use App\Models\Shopify\Event;
@@ -14,8 +15,9 @@ use Illuminate\Support\Facades\Log;
  * shopify_events tablosuna yeni kayıt eklendiğinde
  * uygun job'u dispatchQueue'ya atar.
  *
- *   type='installed'   → InstallJob
- *   type='uninstalled' → UninstallJob
+ *   type='installed'           → InstallJob
+ *   type='uninstalled'         → UninstallJob
+ *   diğer (generator handle'ı) → job yok; yalnızca flow transaction'lar açılır
  *
  * Flow transaction'ları:
  *   - 'installed' için InstallJob, mağaza bilgileri (token + shop.json)
@@ -34,12 +36,12 @@ class ShopifyEventObserver
     public function created(Event $event): void
     {
         match ($event->type) {
-            'installed'   => $this->dispatchInstall($event),
-            'uninstalled' => $this->dispatchUninstall($event),
-            default       => Log::info("[shopify-event-observer] bilinmeyen event type: {$event->type}"),
+            ShopifyEventTypeConstant::INSTALLED   => $this->dispatchInstall($event),
+            ShopifyEventTypeConstant::UNINSTALLED => $this->dispatchUninstall($event),
+            default                               => Log::info("[shopify-event-observer] generator event type: {$event->type}"),
         };
 
-        if ($event->type !== 'installed') {
+        if ($event->type !== ShopifyEventTypeConstant::INSTALLED) {
             $this->flowTransactions->createForEvent($event);
         }
     }

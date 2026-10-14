@@ -96,10 +96,12 @@
                     @foreach($events as $event)
                         <div class="flex items-start gap-3 bg-[#0f0f0f] border border-gray-800 rounded-lg p-3">
                             <div class="flex-shrink-0 mt-0.5">
-                                @if($event->type === 'installed')
+                                @if($event->type === \App\Constant\ShopifyEventTypeConstant::INSTALLED)
                                     <div class="w-2 h-2 rounded-full bg-blue-400"></div>
-                                @else
+                                @elseif($event->type === \App\Constant\ShopifyEventTypeConstant::UNINSTALLED)
                                     <div class="w-2 h-2 rounded-full bg-red-400"></div>
+                                @else
+                                    <div class="w-2 h-2 rounded-full bg-amber-400"></div>
                                 @endif
                             </div>
                             <div class="flex-1 min-w-0">
@@ -110,7 +112,7 @@
                                         <span class="text-gray-500">Bilinmeyen uygulama</span>
                                     @endif
                                     <span class="text-gray-400">
-                                        · {{ $event->type === 'installed' ? 'kuruldu' : 'kaldırıldı' }}
+                                        · {{ $event->type === \App\Constant\ShopifyEventTypeConstant::INSTALLED ? 'kuruldu' : ($event->type === \App\Constant\ShopifyEventTypeConstant::UNINSTALLED ? 'kaldırıldı' : \App\Constant\ShopifyEventTypeConstant::label($event->type)) }}
                                     </span>
                                 </p>
                                 @if($event->label)
