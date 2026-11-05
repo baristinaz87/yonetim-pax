@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Log;
  * Endpoint: https://{domain}/admin/api/2026-04/shop.json
  * Auth:     X-Shopify-Access-Token header'ı (mağazaya özel).
  *
+ * Shopify access token'ları ~1 saat geçerlidir; çağıran taraf token'ı
+ * DB'den okumak yerine StoreTokenResolver / DeliveryApiClient ile
+ * uygulama backend'inden TAZE almalıdır (bkz. InstallJob, PartnerSyncService).
+ *
  * Shopify REST Admin API "leaky bucket" rate limiting uygular.
  * 429 veya 503 throttle durumunda Retry-After header'ına göre bekleyip
  * tekrar denenir.

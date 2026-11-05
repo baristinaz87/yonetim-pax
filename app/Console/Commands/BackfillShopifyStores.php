@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Models\Shopify\StoreApp;
 use App\Services\Shopify\AdminClient;
 use App\Services\Shopify\PartnerSyncService;
+use App\Services\Shopify\StoreTokenResolver;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -28,7 +29,7 @@ class BackfillShopifyStores extends Command
 
     protected $description = 'Mevcut Shopify mağazalarını Partner/Admin API ile zenginleştirir.';
 
-    public function handle(PartnerSyncService $sync, AdminClient $admin): int
+    public function handle(PartnerSyncService $sync, AdminClient $admin, StoreTokenResolver $tokens): int
     {
         try {
             $mode = $this->option('only');
@@ -38,10 +39,11 @@ class BackfillShopifyStores extends Command
             $sync->syncAllApps();
             $this->info('Partner sync tamamlandı.');
 
-            // 2) Token olan mağazalar için Admin API'den zenginleştirme
+            // 2) Aktif mağazalar için Admin API'den zenginleştirme.
+            //    Token'lar ~1 saat geçerli olduğundan DB'deki token filtre olarak
+            //    kullanılmaz; her satır için uygulamadan taze token çekilir.
             $query = StoreApp::query()
-                ->with('store')
-                ->whereNotNull('access_token')
+                ->with(['store', 'app'])
                 ->where('status', 'active');
 
             if ($mode === 'empty') {
@@ -62,7 +64,11 @@ class BackfillShopifyStores extends Command
                     continue;
                 }
                 try {
-                    $admin->fetchAndUpdateStoreDetails($sa->store->domain, $sa->access_token);
+                    // shop.json'dan önce uygulama backend'inden taze token al.
+                    $token = $tokens->freshToken($sa);
+                    if ($token) {
+                        $admin->fetchAndUpdateStoreDetails($sa->store->domain, $token);
+                    }
                 } catch (Throwable $e) {
                     $this->warn("\n[atlandı] {$sa->store->domain}: ".$e->getMessage());
                 }

@@ -50,6 +50,7 @@ class PartnerSyncService
     public function __construct(
         private readonly AdminClient $admin,
         private readonly StoreAppEventRecorder $recorder,
+        private readonly StoreTokenResolver $tokens,
     ) {}
 
     /**
@@ -225,19 +226,26 @@ class PartnerSyncService
 
     /**
      * Mağaza detaylarını Admin API'den çekmeyi dene.
-     * Token yoksa sessizce atla — webhook ya da InstallJob tamamlar.
+     * Token alınamazsa sessizce atla — webhook ya da InstallJob tamamlar.
      */
     private function enrichStore(App $app, string $domain): void
     {
         $store    = Store::where('domain', $domain)->first();
         $storeApp = $store?->apps()->where('app_id', $app->id)->first();
 
-        if (! $storeApp?->access_token || $storeApp->status !== 'active' || ($store->email && $store->phone)) {
+        if (! $storeApp || $storeApp->status !== 'active' || ($store->email && $store->phone)) {
             return;
         }
 
         try {
-            $this->admin->fetchAndUpdateStoreDetails($domain, $storeApp->access_token);
+            // Token'lar ~1 saat geçerli — shop.json'dan önce uygulamadan taze token alınır.
+            $token = $this->tokens->freshToken($storeApp);
+
+            if (! $token) {
+                return;
+            }
+
+            $this->admin->fetchAndUpdateStoreDetails($domain, $token);
         } catch (\Throwable $e) {
             Log::warning("[sync] {$domain} zenginleştirme atlandı: ".$e->getMessage());
         }

@@ -22,9 +22,10 @@ use Throwable;
  *     delivery API'ye POST atılır; dönen JSON StoreAppData üzerinden saklanır.
  *   - Endpoint boşsa kayıt sessizce atlanır (tıpkı `get_access_token_endpoint`
  *     boşsa ShopifyFixShopInformations komutunda kaydın atlanması gibi).
- *   - Token'ı olmayan (henüz kurulmamış/refresh edilmemiş) kayıtlar skip edilir
- *     — bu komutun amacı sadece app data tazelemektir, token yenilemez.
- *     Token yenileme için `shopify:fix-shop-informations` kullanılmalıdır.
+ *   - Token'ı olmayan (henüz kurulmamış) kayıtlar skip edilir.
+ *   - Shopify access token'ları ~1 saat geçerli olduğundan DB'deki token bayat
+ *     olabilir; her kayıt için app-data çağrısından hemen önce uygulamanın
+ *     `get_access_token_endpoint`'inden taze token çekilir ve kayda yazılır.
  *
  * Kullanım:
  *   php artisan shopify:update-app-shop-data
@@ -160,6 +161,25 @@ class UpdateAppShopData extends Command
                         usleep(($minDelayMs - $elapsedMs) * 1000);
                     }
                 }
+
+                // Token'lar ~1 saat geçerli — DB'deki bayat token yerine
+                // app-data çağrısından hemen önce uygulamadan taze token çek.
+                $freshToken = $api->getAccessTokenByShop($domain);
+                $lastRequestAt[$app->id] = microtime(true);
+
+                if (! $freshToken) {
+                    // Mağaza uygulamada tanımlı değil (404) — bayat token da işe yaramaz.
+                    $stats['noToken']++;
+                    Log::info("[update-app-data] {$app->handle}@{$domain}: taze token alınamadı, atlandı");
+                    continue;
+                }
+
+                if (! $dryRun && $freshToken !== $sa->access_token) {
+                    $sa->access_token = $freshToken;
+                    $sa->save();
+                }
+
+                $token = $freshToken;
 
                 $appData = $api->getAppDataByShop($domain, $token);
                 $lastRequestAt[$app->id] = microtime(true);
